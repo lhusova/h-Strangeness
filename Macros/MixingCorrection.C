@@ -1,36 +1,54 @@
 #include "Plotter.h"
 void ScaleMixing(TH2F * histMix);
 
-void MixingCorrection(TString particle="OmegaPlus"){
-  TFile * fFile = new TFile ("../data/AnalysisResults_Hyperloop_16_04.root");
+void MixingCorrection(TString particle="K0Short",TString region = "Signal"){
+  TFile * fFile = new TFile ("../data/AnalysisResults_Hyperloop_09_05.root");
 
-  TH3F* same = (TH3F*) fFile->Get(Form("correlate-strangeness/sameEvent/Hadron%s",particle.Data()));
-  TH3F* mix = (TH3F*) fFile->Get(Form("correlate-strangeness/mixedEvent/Hadron%s",particle.Data()));
+  THnF* same = (THnF*) fFile->Get(Form("correlate-strangeness/sameEvent/%s/%s",region.Data(),particle.Data()));
+  THnF* mix = (THnF*) fFile->Get(Form("correlate-strangeness/mixedEvent/%s/%s",region.Data(),particle.Data()));
 
-  const Int_t nPtBins = 10;
+  const Int_t nPtBins = 7;
   TH2F * fHistCorrected[nPtBins];
-  TH2F * fHistMixProjection[nPtBins];
+  TH2F * fHistSame[nPtBins];
+  TH2F * fHistMix[nPtBins];
+  TH2F * fHistMixProjection[nPtBins][10];
+  TH2F * fHistSameProjection[nPtBins][10];
 
-  TFile * fFileNew = TFile::Open (Form("../data/MixCorrected_%s.root",particle.Data()),"RECREATE");
+  TFile * fFileNew = TFile::Open (Form("../data/MixCorrected_%s_%s.root",region.Data(),particle.Data()),"RECREATE");
   for (Int_t iPt = 0; iPt < nPtBins; iPt++) {
 
-    same->GetZaxis()->SetRange(iPt+1,iPt+1);
-    // mix->GetZaxis()->SetRange(iPt+1,iPt+1);
+    same->GetAxis(2)->SetRange(iPt+1,iPt+1);
+    mix->GetAxis(2)->SetRange(iPt+1,iPt+1);
 
-    fHistCorrected[iPt] = (TH2F *) same->Project3D("xy");
-    fHistCorrected[iPt]->SetName(Form("fHistCorrected_%s_pt%d",particle.Data(),iPt));
-    fHistCorrected[iPt]->RebinX(2);
-    fHistCorrected[iPt]->RebinY(2);
+    fHistSame[iPt] = (TH2F *) same->Projection(0,1);
+    fHistSame[iPt]->SetName(Form("fHistSame_%s_pt%d",particle.Data(),iPt));
+    fHistSame[iPt]->Write();
 
-    fHistMixProjection[iPt] = (TH2F *) mix->Project3D("xy");
-    fHistMixProjection[iPt]->SetName(Form("fHistMix_%s_pt%d",particle.Data(),iPt));
+    fHistMix[iPt] = (TH2F *) mix->Projection(0,1);
+    fHistMix[iPt]->SetName(Form("fHistMixed_%s_pt%d",particle.Data(),iPt));
+    ScaleMixing(fHistMix[iPt]);
+    fHistMix[iPt]->Write();
 
-    fHistMixProjection[iPt]->RebinX(2);
-    fHistMixProjection[iPt]->RebinY(2);
+    for (Int_t iPvz = 0; iPvz < 10; iPvz++) {
+      same->GetAxis(3)->SetRange(iPvz+1,iPvz+1);
+      mix->GetAxis(3)->SetRange(iPvz+1,iPvz+1);
 
-    ScaleMixing(fHistMixProjection[iPt]);
+      fHistSameProjection[iPt][iPvz] = (TH2F *) same->Projection(0,1);
+      fHistSameProjection[iPt][iPvz]->SetName(Form("fHistCorrected_%s_pt%d%d",particle.Data(),iPvz,iPt));
 
-    fHistCorrected[iPt]->Divide(fHistMixProjection[iPt]);
+      fHistMixProjection[iPt][iPvz] = (TH2F *) mix->Projection(0,1);
+      fHistMixProjection[iPt][iPvz]->SetName(Form("fHistMix_%s_pt%d%d",particle.Data(),iPvz,iPt));
+
+      ScaleMixing(fHistMixProjection[iPt][iPvz]);
+      fHistSameProjection[iPt][iPvz]->Divide(fHistMixProjection[iPt][iPvz]);
+
+      if(iPvz==0){
+        fHistCorrected[iPt]=(TH2F*)fHistSameProjection[iPt][iPvz]->Clone();
+        fHistCorrected[iPt]->SetName(Form("fHistCorrected_%s_pt%d",particle.Data(),iPt));
+      }else fHistCorrected[iPt]->Add(fHistSameProjection[iPt][iPvz]);
+
+    }
+
     fHistCorrected[iPt]->Scale(1./fHistCorrected[iPt]->GetXaxis()->GetBinWidth(2));
     fHistCorrected[iPt]->Scale(1./fHistCorrected[iPt]->GetYaxis()->GetBinWidth(2));
 
