@@ -2,7 +2,7 @@
 
 TH1F * GetBachgroundHist(TH1F* hist);
 
-void CalculateYield(Int_t part=2){
+void CalculateYield(Int_t part=0){
 
   Int_t particleType =part;
   if(part==2)particleType=3;
@@ -26,7 +26,8 @@ void CalculateYield(Int_t part=2){
   Float_t nTrigg= histTriggers->Integral();
 
   const Int_t nPtBins = 7;
-  Double_t ptBins[nPtBins]={0.75,1.25,1.75,2.5,3.5,5.,8.};
+  // Double_t ptBins[nPtBins]={0.75,1.25,1.75,2.5,3.5,5.,8.};
+  Double_t ptBins[nPtBins+1]={0.5,1.,1.5,2.,3.,4.,6.,10.};
   Double_t ptBins_err[nPtBins]={0.1,0.1,0.1,0.1,0.1,0.1,0.1};
   TH2F * fHistCorrected[nPtBins][3];
   TH1F * fHistCorrectedProjection[nPtBins];
@@ -35,6 +36,10 @@ void CalculateYield(Int_t part=2){
   Double_t yield_UE_error[nPtBins];
   Double_t yields[2][nPtBins];
   Double_t yields_err[2][nPtBins];
+
+  TH1D * fHistNear = new TH1D("fHistNear","",nPtBins,ptBins);
+  TH1D * fHistAway = new TH1D("fHistAway","",nPtBins,ptBins);
+  TH1D * fHistUE = new TH1D("fHistUE","",nPtBins,ptBins);
 
   TFile * fFileNew = TFile::Open (Form("../data/Yields_%s.root",nameSave[part].Data()),"RECREATE");
 
@@ -63,6 +68,8 @@ void CalculateYield(Int_t part=2){
     yield_UE[iPt]=fHistBckg[iPt]->IntegralAndError(fHistBckg[iPt]->GetXaxis()->GetFirst(),fHistBckg[iPt]->GetXaxis()->GetLast(),yield_UE_error[iPt],"width");
     yield_UE[iPt]=yield_UE[iPt]/50;
     yield_UE_error[iPt]=yield_UE_error[iPt]/50;
+    fHistUE->SetBinContent(iPt+1,yield_UE[iPt]);
+    fHistUE->SetBinError(iPt+1,yield_UE_error[iPt]);
 
     fHistCorrectedProjection[iPt]->Add(fHistBckg[iPt],-1);
     fHistCorrectedProjection[iPt]->SetName(Form("phiProj_noBckg_pT%d",iPt));
@@ -70,31 +77,38 @@ void CalculateYield(Int_t part=2){
 
     yields[0][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(-0.9),fHistCorrectedProjection[iPt]->FindBin(0.9),yields_err[0][iPt],"width");
     yields[1][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()-1.4),fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()+1.4),yields_err[1][iPt],"width");
-
+    fHistNear->SetBinContent(iPt+1,yields[0][iPt]);
+    fHistNear->SetBinError(iPt+1,yields_err[0][iPt]);
+    fHistAway->SetBinContent(iPt+1,yields[1][iPt]);
+    fHistAway->SetBinError(iPt+1,yields_err[1][iPt]);
   }
-  fFileNew->Close();
 
-  TGraphErrors * fGraphNear = new TGraphErrors(nPtBins,ptBins,yields[0],ptBins_err,yields_err[0]);
-  fGraphNear->SetName("fGraphNear");
-  Plotter::SetGraphAxes(fGraphNear,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
-  Plotter::SetGraph(fGraphNear,"",20,kRed+1,1.);
+  // TGraphErrors * fGraphNear = new TGraphErrors(nPtBins,ptBins,yields[0],ptBins_err,yields_err[0]);
+  // fGraphNear->SetName("fGraphNear");
+  Plotter::SetHistAxes(fHistNear,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
+  Plotter::SetHist(fHistNear,"",20,kRed+1,1.);
 
-  TGraphErrors * fGraphAway = new TGraphErrors(nPtBins,ptBins,yields[1],ptBins_err,yields_err[1]);
-  fGraphAway->SetName("fGraphAway");
-  Plotter::SetGraphAxes(fGraphAway,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
-  Plotter::SetGraph(fGraphAway,"",20,kBlue+1,1.);
+  // TGraphErrors * fGraphAway = new TGraphErrors(nPtBins,ptBins,yields[1],ptBins_err,yields_err[1]);
+  // fGraphAway->SetName("fGraphAway");
+  Plotter::SetHistAxes(fHistAway,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
+  Plotter::SetHist(fHistAway,"",20,kBlue+1,1.);
 
-  TGraphErrors * fGraphUE = new TGraphErrors(nPtBins,ptBins,yield_UE,ptBins_err,yield_UE_error);
-  fGraphUE->SetName("fGraphUE");
-  Plotter::SetGraphAxes(fGraphUE,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
-  Plotter::SetGraph(fGraphUE,"",20,kGreen+1,1.);
+  // TGraphErrors * fGraphUE = new TGraphErrors(nPtBins,ptBins,yield_UE,ptBins_err,yield_UE_error);
+  // fGraphUE->SetName("fGraphUE");
+  Plotter::SetHistAxes(fHistUE,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
+  Plotter::SetHist(fHistUE,"",20,kGreen+1,1.);
 
   TCanvas *can = Plotter::CreateCanvas("c");
+  gStyle->SetErrorX(0.01);
   can->GetPadSave()->SetLogy();
-  fGraphNear->GetYaxis()->SetRangeUser(0.5*fGraphUE->GetPointY(6),1.5*fGraphNear->GetPointY(3));
-  fGraphNear->Draw("ap");
-  fGraphAway->Draw("p same");
-  fGraphUE->Draw("p same");
+  fHistNear->GetYaxis()->SetRangeUser(0.5*fHistUE->GetMinimum(),1.5*fHistNear->GetMaximum());
+  fHistNear->DrawCopy("");
+  fHistAway->DrawCopy("p same");
+  fHistUE->DrawCopy("p same");
+
+  fHistNear->Write();
+  fHistAway->Write();
+  fHistUE->Write();
 
   TPaveText *pave = new TPaveText();
   Plotter::SetPaveText(pave,42,0.05, 0, 0,33,0,0.55,0.95, 0.65,0.95);
@@ -106,13 +120,13 @@ void CalculateYield(Int_t part=2){
   pave->Draw("same");
 
   TLegend *leg = Plotter::CreateLegend(0.15, 0.45, 0.15, 0.45,0.05);
-  leg->AddEntry(fGraphNear,"Near-side, |#Delta#varphi|<0.9","pl");
-  leg->AddEntry(fGraphAway,"Away-side, |#Delta#varphi-#pi|<1.4","pl");
-  leg->AddEntry(fGraphUE,"Underlying event #times 1/50","pl");
+  leg->AddEntry(fHistNear,"Near-side, |#Delta#varphi|<0.9","pl");
+  leg->AddEntry(fHistAway,"Away-side, |#Delta#varphi-#pi|<1.4","pl");
+  leg->AddEntry(fHistUE,"Underlying event #times 1/50","pl");
   leg->Draw("same");
 
   can->SaveAs(Form("../Plots/Yield_%s.pdf",nameSave[part].Data()));
-
+  fFileNew->Close();
 }
 //____________________________________________________________________
 TH1F * GetBachgroundHist(TH1F* hist){
