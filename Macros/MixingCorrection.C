@@ -1,11 +1,14 @@
 #include "Plotter.h"
 void ScaleMixing(TH2F * histMix);
 
-void MixingCorrection(TString particle="K0Short",TString region = "Signal"){
-  TFile * fFile = new TFile ("../data/AnalysisResults_Hyperloop_09_05.root");
+void MixingCorrection(TString particle="K0Short",TString region = "Signal",Int_t mult_i = 0){
+  TFile * fFile = new TFile ("../data/AnalysisResults_Hyperloop_15_05.root");
+  TString multBinsName[]={"0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
 
   THnF* same = (THnF*) fFile->Get(Form("correlate-strangeness/sameEvent/%s/%s",region.Data(),particle.Data()));
+  same->GetAxis(4)->SetRange(mult_i+1,mult_i+1);
   THnF* mix = (THnF*) fFile->Get(Form("correlate-strangeness/mixedEvent/%s/%s",region.Data(),particle.Data()));
+  mix->GetAxis(4)->SetRange(mult_i+1,mult_i+1);
 
   const Int_t nPtBins = 7;
   TH2F * fHistCorrected[nPtBins];
@@ -14,7 +17,7 @@ void MixingCorrection(TString particle="K0Short",TString region = "Signal"){
   TH2F * fHistMixProjection[nPtBins][10];
   TH2F * fHistSameProjection[nPtBins][10];
 
-  TFile * fFileNew = TFile::Open (Form("../data/MixCorrected_%s_%s.root",region.Data(),particle.Data()),"RECREATE");
+  TFile * fFileNew = TFile::Open (Form("../data/MixCorrected/%s/MixCorrected_%s_%s_%s.root",particle.Data(),region.Data(),particle.Data(),multBinsName[mult_i].Data()),"RECREATE");
   for (Int_t iPt = 0; iPt < nPtBins; iPt++) {
 
     same->GetAxis(2)->SetRange(iPt+1,iPt+1);

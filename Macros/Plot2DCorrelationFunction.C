@@ -1,6 +1,6 @@
 #include "Plotter.h"
 
-void Plot2DCorrelationFunction(TString particle="K0Short",TString region = "Signal",Int_t ptBin=2, TString option = "same"){
+void Plot2DCorrelationFunction(TString particle="K0Short",TString region = "RightBg",Int_t ptBin=2, TString option = "corrected"){
 
   TFile * fFile = new TFile (Form("../data/MixCorrected_%s_%s.root",region.Data(),particle.Data()));
 

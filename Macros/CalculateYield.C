@@ -15,10 +15,10 @@ void CalculateYield(Int_t part=0){
   TFile * fFile2[3];
   TString InvMassRanges[] = {"Signal", "LeftBg", "RightBg"};
   for (Int_t i = 0; i < 3; i++) {
-    fFile[i] = new TFile(Form("../data/MixCorrected_%s_%s.root",InvMassRanges[i].Data(),name[particleType].Data()));
-    if(part>0) fFile2[i] = new TFile(Form("../data/MixCorrected_%s_%s.root",InvMassRanges[i].Data(),name[particleType+1].Data()));
+    fFile[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_minBias.root",name[particleType].Data(),InvMassRanges[i].Data(),name[particleType].Data()));
+    if(part>0) fFile2[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_minBias.root",name[particleType].Data(),InvMassRanges[i].Data(),name[particleType+1].Data()));
   }
-  TFile * fFileTrigger = new TFile("../data/AnalysisResults_Hyperloop_09_05.root");
+  TFile * fFileTrigger = new TFile("../data/AnalysisResults_Hyperloop_15_05.root");
   TH1F* histTriggers;
   if(part<3) histTriggers = (TH1F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesV0");
   else histTriggers = (TH1F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesCascades");
@@ -83,18 +83,12 @@ void CalculateYield(Int_t part=0){
     fHistAway->SetBinError(iPt+1,yields_err[1][iPt]);
   }
 
-  // TGraphErrors * fGraphNear = new TGraphErrors(nPtBins,ptBins,yields[0],ptBins_err,yields_err[0]);
-  // fGraphNear->SetName("fGraphNear");
   Plotter::SetHistAxes(fHistNear,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
   Plotter::SetHist(fHistNear,"",20,kRed+1,1.);
 
-  // TGraphErrors * fGraphAway = new TGraphErrors(nPtBins,ptBins,yields[1],ptBins_err,yields_err[1]);
-  // fGraphAway->SetName("fGraphAway");
   Plotter::SetHistAxes(fHistAway,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
   Plotter::SetHist(fHistAway,"",20,kBlue+1,1.);
 
-  // TGraphErrors * fGraphUE = new TGraphErrors(nPtBins,ptBins,yield_UE,ptBins_err,yield_UE_error);
-  // fGraphUE->SetName("fGraphUE");
   Plotter::SetHistAxes(fHistUE,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
   Plotter::SetHist(fHistUE,"",20,kGreen+1,1.);
 
