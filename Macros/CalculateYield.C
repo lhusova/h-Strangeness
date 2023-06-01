@@ -2,7 +2,7 @@
 
 TH1F * GetBachgroundHist(TH1F* hist);
 
-void CalculateYield(Int_t part=0){
+void CalculateYield(Int_t part=0,Int_t multClass =0){
 
   Int_t particleType =part;
   if(part==2)particleType=3;
@@ -10,20 +10,24 @@ void CalculateYield(Int_t part=0){
   TString name[]={"K0Short","Lambda","AntiLambda","XiMinus","XiPlus","OmegaMinus","OmegaPlus"};
   TString finalNames[]={"K_{S}^{0}","(#Lambda+#bar{#Lambda})","(#Xi^{+}+#Xi^{-})","(#Omega^{+}+#Omega^{-})"};
   TString nameSave[]={"K0s","Lam","Xi","Omega"};
+  TString multiplicityNames[]={"minBias","0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
+  TString multiplicityPave[]={"MB","0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"};
 
   TFile * fFile[3];
   TFile * fFile2[3];
   TString InvMassRanges[] = {"Signal", "LeftBg", "RightBg"};
   for (Int_t i = 0; i < 3; i++) {
-    fFile[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_minBias.root",name[particleType].Data(),InvMassRanges[i].Data(),name[particleType].Data()));
-    if(part>0) fFile2[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_minBias.root",name[particleType].Data(),InvMassRanges[i].Data(),name[particleType+1].Data()));
+    fFile[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_%s.root",name[particleType].Data(),InvMassRanges[i].Data(),name[particleType].Data(),multiplicityNames[multClass].Data()));
+    if(part>0) fFile2[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_%s.root",name[particleType+1].Data(),InvMassRanges[i].Data(),name[particleType+1].Data(),multiplicityNames[multClass].Data()));
   }
-  TFile * fFileTrigger = new TFile("../data/AnalysisResults_Hyperloop_15_05.root");
-  TH1F* histTriggers;
-  if(part<3) histTriggers = (TH1F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesV0");
-  else histTriggers = (TH1F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesCascades");
+  TFile * fFileTrigger = new TFile("../data/AnalysisResults_Hyperloop_31_05_V0.root");
+  TH2F* histTriggers;
+  if(part<2) histTriggers = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesV0");
+  else histTriggers = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesCascade");
 
-  Float_t nTrigg= histTriggers->Integral();
+  if(multClass>0)histTriggers->GetYaxis()->SetRange(multClass,multClass);
+  TH1F * hist1DTriggers = (TH1F *) histTriggers->ProjectionX();
+  Float_t nTrigg= hist1DTriggers->Integral();
 
   const Int_t nPtBins = 7;
   // Double_t ptBins[nPtBins]={0.75,1.25,1.75,2.5,3.5,5.,8.};
@@ -41,7 +45,7 @@ void CalculateYield(Int_t part=0){
   TH1D * fHistAway = new TH1D("fHistAway","",nPtBins,ptBins);
   TH1D * fHistUE = new TH1D("fHistUE","",nPtBins,ptBins);
 
-  TFile * fFileNew = TFile::Open (Form("../data/Yields_%s.root",nameSave[part].Data()),"RECREATE");
+  TFile * fFileNew = TFile::Open (Form("../data/Yields_%s_%s.root",nameSave[part].Data(),multiplicityNames[multClass].Data()),"RECREATE");
 
   for (Int_t iPt = 0; iPt < nPtBins; iPt++) {
     for (Int_t iFile = 0; iFile < 3; iFile++) { // side-band subtraction
@@ -49,7 +53,6 @@ void CalculateYield(Int_t part=0){
       if(part>0)fHistCorrected[iPt][iFile]->Add ((TH2F*)fFile2[iFile]->Get(Form("fHistCorrected_%s_pt%d",name[particleType+1].Data(),iPt)));
       if(iFile>0) fHistCorrected[iPt][0]->Add(fHistCorrected[iPt][iFile],-1);
     }
-
     fHistCorrected[iPt][0]->GetXaxis()->SetRangeUser(-1,1);
 
     fHistCorrectedProjection[iPt] = (TH1F *) fHistCorrected[iPt][0]->ProjectionY();
@@ -100,6 +103,7 @@ void CalculateYield(Int_t part=0){
   fHistAway->DrawCopy("p same");
   fHistUE->DrawCopy("p same");
 
+  hist1DTriggers->Write();
   fHistNear->Write();
   fHistAway->Write();
   fHistUE->Write();
@@ -108,6 +112,7 @@ void CalculateYield(Int_t part=0){
   Plotter::SetPaveText(pave,42,0.05, 0, 0,33,0,0.55,0.95, 0.65,0.95);
   pave->AddText("ALICE, Work in Progress");
   pave->AddText("pp, 13.6 TeV");
+  pave->AddText(Form("%s",multiplicityPave[multClass].Data()));
   pave->AddText(Form("h-%s",finalNames[part].Data()));
   pave->AddText(Form("3 < #font[12]{p}^{trigg}_{T} < 20 GeV/#font[12]{c}"));
   pave->AddText("|#Delta#eta| < 1");
@@ -119,7 +124,7 @@ void CalculateYield(Int_t part=0){
   leg->AddEntry(fHistUE,"Underlying event #times 1/50","pl");
   leg->Draw("same");
 
-  can->SaveAs(Form("../Plots/Yield_%s.pdf",nameSave[part].Data()));
+  can->SaveAs(Form("../Plots/Yield_%s_%s.pdf",nameSave[part].Data(),multiplicityNames[multClass].Data()));
   fFileNew->Close();
 }
 //____________________________________________________________________
