@@ -1,6 +1,6 @@
 #include "Plotter.h"
 
-void PlotMultiplicityDep(Int_t region = 0, Int_t part = 1){
+void PlotMultiplicityDep(Int_t region = 0, Int_t part = 0){
 
   TString multiplicityNames[]={"minBias","0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
   TString multiplicityLeg[]={"MB","0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"};
@@ -53,4 +53,24 @@ void PlotMultiplicityDep(Int_t region = 0, Int_t part = 1){
   pave->AddText(Form("%s",regionName[region].Data()));
   pave->Draw("same");
 
+  TCanvas *canRatio = Plotter::CreateCanvas("c1");
+  gStyle->SetErrorX(0.01);
+
+  TLegend *legRatio = Plotter::CreateLegend(0.15, 0.45, 0.53, 0.93,0.05);
+
+  for (size_t i = 1; i < 11; i++) {
+    yieldHist[i]->Divide(yieldHist[0]);
+    if(i==1){
+      yieldHist[i]->GetYaxis()->SetRangeUser(-0.59,3.99);
+      yieldHist[i]->GetYaxis()->SetTitle("Y/Y_{MB}");
+      yieldHist[i]->DrawCopy();
+    }
+    else {
+      yieldHist[i]->DrawCopy("same");
+    }
+    legRatio->AddEntry(yieldHist[i],Form("%s",multiplicityLeg[i].Data()),"pl");
+  }
+  legRatio->Draw();
+  pave->Draw("same");
+  Plotter::DrawUnity(kBlack);
 }
