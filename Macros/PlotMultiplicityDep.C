@@ -1,6 +1,6 @@
 #include "Plotter.h"
 
-void PlotMultiplicityDep(Int_t region = 0, Int_t part = 0){
+void PlotMultiplicityDep(Int_t region = 2, Int_t part = 0){
 
   TString multiplicityNames[]={"minBias","0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
   TString multiplicityLeg[]={"MB","0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"};
@@ -8,6 +8,7 @@ void PlotMultiplicityDep(Int_t region = 0, Int_t part = 0){
   TString histName[]={"fHistNear","fHistAway","fHistUE"};
   TString finalNames[]={"K_{S}^{0}","(#Lambda+#bar{#Lambda})","(#Xi^{+}+#Xi^{-})","(#Omega^{+}+#Omega^{-})"};
   TString regionName[]={"Near-side, |#Delta#varphi|<0.9","Away-side, |#Delta#varphi-#pi|<1.4","Underlying event"};
+  TString regionSaveName[]={"Near","Away","UE"};
   TFile *fFile[11];
   TH1F * yieldHist[11];
 
@@ -53,6 +54,8 @@ void PlotMultiplicityDep(Int_t region = 0, Int_t part = 0){
   pave->AddText(Form("%s",regionName[region].Data()));
   pave->Draw("same");
 
+  can->SaveAs(Form("../Plots/Yield_%s_mult_%s.pdf",nameSave[part].Data(),regionSaveName[region].Data()));
+
   TCanvas *canRatio = Plotter::CreateCanvas("c1");
   gStyle->SetErrorX(0.01);
 
@@ -73,4 +76,6 @@ void PlotMultiplicityDep(Int_t region = 0, Int_t part = 0){
   legRatio->Draw();
   pave->Draw("same");
   Plotter::DrawUnity(kBlack);
+
+  canRatio->SaveAs(Form("../Plots/Yield_%s_multRatio_%s.pdf",nameSave[part].Data(),regionSaveName[region].Data()));
 }

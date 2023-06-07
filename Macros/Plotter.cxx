@@ -22,7 +22,7 @@ void Plotter::SetPaveText(TPaveText * pave, Font_t tfont,Float_t tsize, Style_t 
 TCanvas * Plotter::CreateCanvas(TString padname){
   TCanvas * can = new TCanvas();
   TPad * pad = new TPad(padname.Data(),padname.Data(),0.001,0.001,0.999,0.999);
-  pad ->SetMargin(0.12,0.03,0.12,0.03);
+  pad ->SetMargin(0.12,0.02,0.12,0.05);
   pad ->Draw();
   pad->cd();
   pad->SetTicky();

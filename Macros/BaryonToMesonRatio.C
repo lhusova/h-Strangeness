@@ -1,9 +1,12 @@
 #include "Plotter.h"
 
-void BaryonToMesonRatio(){
+void BaryonToMesonRatio(Int_t multClass =1){
 
-  TFile * fFileK0s = new TFile("../data/Yields_K0s.root");
-  TFile * fFileLam = new TFile("../data/Yields_Lam.root");
+  TString multiplicityNames[]={"minBias","0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
+  TString multiplicityPave[]={"MB","0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"};
+
+  TFile * fFileK0s = new TFile(Form("../data/Yields_K0s_%s.root",multiplicityNames[multClass].Data()));
+  TFile * fFileLam = new TFile(Form("../data/Yields_Lam_%s.root",multiplicityNames[multClass].Data()));
 
   TH1D *histK0s[3];
   TH1D *histLam[3];
@@ -42,6 +45,7 @@ void BaryonToMesonRatio(){
   pave->AddText("pp, 13.6 TeV");
   pave->AddText(Form("3 < #font[12]{p}^{trigg}_{T} < 20 GeV/#font[12]{c}"));
   pave->AddText("|#Delta#eta| < 1");
+  pave->AddText(multiplicityPave[multClass].Data());
   pave->Draw("same");
 
   TLegend *leg = Plotter::CreateLegend(0.15, 0.45, 0.15, 0.45,0.05);
@@ -50,5 +54,5 @@ void BaryonToMesonRatio(){
   leg->AddEntry(histRatio[2],"Underlying event","pl");
   leg->Draw("same");
 
-  can->SaveAs("../Plots/LambdaOverK0sRatio.pdf");
+  can->SaveAs(Form("../Plots/LambdaOverK0sRatio_%s.pdf",multiplicityNames[multClass].Data()));
 }
