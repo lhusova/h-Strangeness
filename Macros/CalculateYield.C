@@ -2,7 +2,7 @@
 
 TH1F * GetBachgroundHist(TH1F* hist);
 
-void CalculateYield(Int_t part=0,Int_t multClass =0){
+void CalculateYield(Int_t part=0,Int_t multClass =1){
 
   Int_t particleType =part;
   if(part==2)particleType=3;
@@ -71,8 +71,9 @@ void CalculateYield(Int_t part=0,Int_t multClass =0){
     yield_UE[iPt]=fHistBckg[iPt]->IntegralAndError(fHistBckg[iPt]->GetXaxis()->GetFirst(),fHistBckg[iPt]->GetXaxis()->GetLast(),yield_UE_error[iPt],"width");
     yield_UE[iPt]=yield_UE[iPt]/50;
     yield_UE_error[iPt]=yield_UE_error[iPt]/50;
-    fHistUE->SetBinContent(iPt+1,yield_UE[iPt]);
-    fHistUE->SetBinError(iPt+1,yield_UE_error[iPt]);
+    cout << (ptBins[iPt+1]-ptBins[iPt]) << endl;
+    fHistUE->SetBinContent(iPt+1,yield_UE[iPt]/(ptBins[iPt+1]-ptBins[iPt]));
+    fHistUE->SetBinError(iPt+1,yield_UE_error[iPt]/(ptBins[iPt+1]-ptBins[iPt]));
 
     fHistCorrectedProjection[iPt]->Add(fHistBckg[iPt],-1);
     fHistCorrectedProjection[iPt]->SetName(Form("phiProj_noBckg_pT%d",iPt));
@@ -80,19 +81,19 @@ void CalculateYield(Int_t part=0,Int_t multClass =0){
 
     yields[0][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(-0.9),fHistCorrectedProjection[iPt]->FindBin(0.9),yields_err[0][iPt],"width");
     yields[1][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()-1.4),fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()+1.4),yields_err[1][iPt],"width");
-    fHistNear->SetBinContent(iPt+1,yields[0][iPt]);
-    fHistNear->SetBinError(iPt+1,yields_err[0][iPt]);
-    fHistAway->SetBinContent(iPt+1,yields[1][iPt]);
-    fHistAway->SetBinError(iPt+1,yields_err[1][iPt]);
+    fHistNear->SetBinContent(iPt+1,yields[0][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
+    fHistNear->SetBinError(iPt+1,yields_err[0][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
+    fHistAway->SetBinContent(iPt+1,yields[1][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
+    fHistAway->SetBinError(iPt+1,yields_err[1][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
   }
 
-  Plotter::SetHistAxes(fHistNear,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
+  Plotter::SetHistAxes(fHistNear,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","1/#font[12]{N}_{Trigg}d#font[12]{N}/d#font[12]{p}_{T}");
   Plotter::SetHist(fHistNear,"",20,kRed+1,1.);
 
-  Plotter::SetHistAxes(fHistAway,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
+  Plotter::SetHistAxes(fHistAway,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","1/#font[12]{N}_{Trigg}d#font[12]{N}/d#font[12]{p}_{T}");
   Plotter::SetHist(fHistAway,"",20,kBlue+1,1.);
 
-  Plotter::SetHistAxes(fHistUE,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","Y");
+  Plotter::SetHistAxes(fHistUE,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","1/#font[12]{N}_{Trigg}d#font[12]{N}/d#font[12]{p}_{T}");
   Plotter::SetHist(fHistUE,"",20,kGreen+1,1.);
 
   TCanvas *can = Plotter::CreateCanvas("c");
