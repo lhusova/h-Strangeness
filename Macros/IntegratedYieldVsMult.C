@@ -1,6 +1,6 @@
 #include "Plotter.h"
 
-void IntegratedYieldVsMult(Int_t iPart = 1){
+void IntegratedYieldVsMult(Int_t iPart = 0){
 
   if(iPart>3) {
     cout<< "Error!!! Assoc particle not defined !!!" << endl;
@@ -29,9 +29,9 @@ void IntegratedYieldVsMult(Int_t iPart = 1){
   histYield[1] = new TH1F("histYieldAway","",10,0,10);
   histYield[2] = new TH1F("histYieldUE","",10,0,10);
 
-  TF1 * boltzmann = new TF1("boltzmann","x*[0]*TMath::Sqrt([2]*[2]+x*x)*TMath::Sqrt(-TMath::Sqrt([2]*[2]+x*x)/[1])",0,10);
-  boltzmann->SetParameter(0,0.1);
-  boltzmann->SetParameter(1,70);
+  TF1 * boltzmann = new TF1("boltzmann","x*[0]*TMath::Sqrt([2]*[2]+x*x)*TMath::Exp(-TMath::Sqrt([2]*[2]+x*x)/[1])",0,10);
+  boltzmann->SetParameter(0,0.04);
+  boltzmann->SetParameter(1,0.1);
   boltzmann->FixParameter(2,particleMass[iPart]);
 
   TF1 * fermiDir = new TF1("fermiDir","x*[0]/(TMath::Exp(TMath::Sqrt([2]*[2]+x*x)/[1])+1)",0,10);
@@ -43,12 +43,14 @@ void IntegratedYieldVsMult(Int_t iPart = 1){
   levy->SetParameter(0,7);
   levy->SetParameter(1,0.8);
   levy->FixParameter(2,particleMass[iPart]);
-  levy->SetParameter(3,0.05);
+  levy->SetParameter(3,0.03);
 
   TF1 * mT = new TF1("mT","x*[0]*TMath::Exp(-TMath::Sqrt([2]*[2]+x*x)/[1])",0,10);
   mT->SetParameter(0,0.01);
-  mT->SetParameter(1,160);
+  mT->SetParameter(1,0.7);
+  mT->SetParLimits(1,0.1,10);
   mT->FixParameter(2,particleMass[iPart]);
+
   for (Int_t iMult = 0; iMult < 10; iMult++) {
     file[iMult] = new TFile(Form("../data/Yields_%s_%s.root",particleName[iPart].Data(),multiplicityNames[iMult].Data()));
     for (Int_t iReg = 0; iReg < 3; iReg++) {

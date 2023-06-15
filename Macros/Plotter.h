@@ -13,6 +13,7 @@ namespace Plotter {
     void SetGraphAxes(TGraph *gr, TString xTitle, TString yTitle) ;
     void SetGraph(TGraph *gr, TString title,Int_t mStyle, Color_t col,Float_t mSize,Float_t alpha=0.5, Int_t line_s=1, Int_t line_w=1);
     void SetHistAxes(TH1 *hist, TString xTitle, TString yTitle) ;
+    void SetHistAxesSmallPad(TH1 *hist, TString xTitle, TString yTitle);
     void SetHist(TH1 *hist, TString title,Int_t mStyle, Color_t col,Float_t mSize, Int_t line_s=1, Int_t line_w=1);
     void DrawUnity(Color_t col, Float_t par = 1,Float_t min=0.2, Float_t max=10);
     TLegend * CreateLegend(Float_t x1pos,Float_t x2pos,Float_t y1pos, Float_t y2pos,Float_t textSize);

@@ -1,8 +1,10 @@
 #include "Plotter.h"
 
-TH1F * GetBachgroundHist(TH1F* hist);
+TH1F * GetBackgroundHist(TH1F* hist);
+TH1F * GetBackgroundLongRange(TH1F* hist,TH2F * hist2d);
+TH1F * GetBackgroundFlow(TH1F* hist,Int_t part, Double_t meanPtTrigg, Double_t ptAssoc, TFile *  fileFlow);
 
-void CalculateYield(Int_t part=0,Int_t multClass =1){
+void CalculateYield(Int_t part=0,Int_t multClass =1, Int_t bckg = 0){
 
   Int_t particleType =part;
   if(part==2)particleType=3;
@@ -12,6 +14,9 @@ void CalculateYield(Int_t part=0,Int_t multClass =1){
   TString nameSave[]={"K0s","Lam","Xi","Omega"};
   TString multiplicityNames[]={"minBias","0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
   TString multiplicityPave[]={"MB","0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"};
+  TString nameBackground[] = {"flat","long_range","flow_modulation"};
+
+  TFile *fileFlow = new TFile("../data/Flow/prapared_flow.root");
 
   TFile * fFile[3];
   TFile * fFile2[3];
@@ -45,7 +50,7 @@ void CalculateYield(Int_t part=0,Int_t multClass =1){
   TH1D * fHistAway = new TH1D("fHistAway","",nPtBins,ptBins);
   TH1D * fHistUE = new TH1D("fHistUE","",nPtBins,ptBins);
 
-  TFile * fFileNew = TFile::Open (Form("../data/Yields_%s_%s.root",nameSave[part].Data(),multiplicityNames[multClass].Data()),"RECREATE");
+  TFile * fFileNew = TFile::Open (Form("../data/Yields/%s/Yields_%s_%s_fullrangePeak_11_%s.root",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),nameBackground[bckg].Data()),"RECREATE");
 
   for (Int_t iPt = 0; iPt < nPtBins; iPt++) {
     for (Int_t iFile = 0; iFile < 3; iFile++) { // side-band subtraction
@@ -53,7 +58,8 @@ void CalculateYield(Int_t part=0,Int_t multClass =1){
       if(part>0)fHistCorrected[iPt][iFile]->Add ((TH2F*)fFile2[iFile]->Get(Form("fHistCorrected_%s_pt%d",name[particleType+1].Data(),iPt)));
       if(iFile>0) fHistCorrected[iPt][0]->Add(fHistCorrected[iPt][iFile],-1);
     }
-    fHistCorrected[iPt][0]->GetXaxis()->SetRangeUser(-1,1);
+    fHistCorrected[iPt][0]->Write();
+    fHistCorrected[iPt][0]->GetXaxis()->SetRangeUser(-1.1,1.1);
 
     fHistCorrectedProjection[iPt] = (TH1F *) fHistCorrected[iPt][0]->ProjectionY();
     fHistCorrectedProjection[iPt]->Scale(fHistCorrected[iPt][0]->GetXaxis()->GetBinWidth(2));
@@ -64,7 +70,13 @@ void CalculateYield(Int_t part=0,Int_t multClass =1){
     fHistCorrectedProjection[iPt]->SetName(Form("phiProj_withBckg_pT%d",iPt));
     fHistCorrectedProjection[iPt]->Write();
 
-    fHistBckg[iPt] = GetBachgroundHist(fHistCorrectedProjection[iPt]);
+    if(bckg==0)fHistBckg[iPt] = GetBackgroundHist(fHistCorrectedProjection[iPt]);
+    else if(bckg==1)fHistBckg[iPt] = GetBackgroundLongRange(fHistCorrectedProjection[iPt],fHistCorrected[iPt][0]);
+    else if (bckg==2)fHistBckg[iPt] = GetBackgroundFlow(fHistCorrectedProjection[iPt],part,hist1DTriggers->GetMean(),(ptBins[iPt]+ptBins[iPt+1])/2,fileFlow);
+    else {
+      cout << "ERROR: Underlying Event not defined!!!!" << endl;
+      return;
+    }
     fHistBckg[iPt]->SetName(Form("underlying_ev_pT%d",iPt));
 
     fHistBckg[iPt]->Write();
@@ -79,8 +91,8 @@ void CalculateYield(Int_t part=0,Int_t multClass =1){
     fHistCorrectedProjection[iPt]->SetName(Form("phiProj_noBckg_pT%d",iPt));
     fHistCorrectedProjection[iPt]->Write();
 
-    yields[0][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(-0.9),fHistCorrectedProjection[iPt]->FindBin(0.9),yields_err[0][iPt],"width");
-    yields[1][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()-1.4),fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()+1.4),yields_err[1][iPt],"width");
+    yields[0][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(-TMath::Pi()/2),fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()/2),yields_err[0][iPt],"width");
+    yields[1][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()-TMath::Pi()/2),fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()+TMath::Pi()/2),yields_err[1][iPt],"width");
     fHistNear->SetBinContent(iPt+1,yields[0][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
     fHistNear->SetBinError(iPt+1,yields_err[0][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
     fHistAway->SetBinContent(iPt+1,yields[1][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
@@ -116,20 +128,20 @@ void CalculateYield(Int_t part=0,Int_t multClass =1){
   pave->AddText(Form("%s",multiplicityPave[multClass].Data()));
   pave->AddText(Form("h-%s",finalNames[part].Data()));
   pave->AddText(Form("3 < #font[12]{p}^{trigg}_{T} < 20 GeV/#font[12]{c}"));
-  pave->AddText("|#Delta#eta| < 1");
+  pave->AddText("|#Delta#eta| < 1.1");
   pave->Draw("same");
 
   TLegend *leg = Plotter::CreateLegend(0.15, 0.45, 0.15, 0.45,0.05);
-  leg->AddEntry(fHistNear,"Near-side, |#Delta#varphi|<0.9","pl");
-  leg->AddEntry(fHistAway,"Away-side, |#Delta#varphi-#pi|<1.4","pl");
+  leg->AddEntry(fHistNear,"Near-side, |#Delta#varphi|<#pi/2","pl");
+  leg->AddEntry(fHistAway,"Away-side, |#Delta#varphi-#pi|<#pi/2","pl");
   leg->AddEntry(fHistUE,"Underlying event #times 1/50","pl");
   leg->Draw("same");
 
-  can->SaveAs(Form("../Plots/Yield_%s_%s.pdf",nameSave[part].Data(),multiplicityNames[multClass].Data()));
+  can->SaveAs(Form("../Plots/Yields/%s/Yield_%s_%s_fullrangePeak_11_%s.pdf",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),nameBackground[bckg].Data()));
   fFileNew->Close();
 }
 //____________________________________________________________________
-TH1F * GetBachgroundHist(TH1F* hist){
+TH1F * GetBackgroundHist(TH1F* hist){
 
   Int_t bins[8]={1,2,3,4,33,34,35,36};
   Double_t value =0;
@@ -147,6 +159,60 @@ TH1F * GetBachgroundHist(TH1F* hist){
   for (size_t iPhi = 1; iPhi < hist->GetXaxis()->GetNbins()+1; iPhi++) {
     bckg->SetBinContent(iPhi,value);
     bckg->SetBinError(iPhi,err);
+  }
+  return bckg;
+
+}
+//____________________________________________________________________
+TH1F * GetBackgroundLongRange(TH1F* hist,TH2F * hist2d){
+
+  hist2d->GetXaxis()->SetRangeUser(-1.4,-1.1);
+  TH1F * projLeft = (TH1F*)hist2d->ProjectionY();
+
+  hist2d->GetXaxis()->SetRangeUser(1.1,1.4);
+  TH1F * projRight = (TH1F*)hist2d->ProjectionY();
+
+  TH1F * histBckg = (TH1F*) projLeft->Clone();
+  histBckg->Add(projRight);
+
+  histBckg->Scale(hist->GetBinContent(36)/histBckg->GetBinContent(36));
+
+  return histBckg;
+}
+//____________________________________________________________________
+TH1F * GetBackgroundFlow(TH1F* hist, Int_t part, Double_t meanPtTrigg, Double_t ptAssoc, TFile *  fileFlow){
+
+  Int_t bins[8]={1,2,3,4,33,34,35,36};
+  Double_t value =0;
+
+  for (size_t i = 0; i < 8; i++) {
+    value+=hist->GetBinContent(bins[i]);
+  }
+  value=value/8;
+
+
+  TGraphErrors * trigg = (TGraphErrors * ) fileFlow->Get("v2_charged");
+  TGraphErrors * assoc;
+  if(part==0) assoc = (TGraphErrors * ) fileFlow->Get("v2_K0_Combined");
+  else if(part==1) assoc = (TGraphErrors * ) fileFlow->Get("v2_Lambda_Combined");
+  else {
+    cout << "ERROR!! Cascade v2 not available!!! ";
+    return 0x0;
+  }
+
+  TF1 * bcgkFunction = new TF1("bcgkFunction","[0]*(1+2*[1]*[2]*TMath::Cos(2*x))",-TMath::Pi()/2,3/2*TMath::Pi());
+  cout << value << endl;
+  cout << trigg->Eval(meanPtTrigg) << endl;
+  bcgkFunction->SetParameter(0,value);
+
+  bcgkFunction->SetParameter(1,trigg->Eval(meanPtTrigg));
+  cout << assoc->Eval(ptAssoc) << endl;
+  bcgkFunction->SetParameter(2,assoc->Eval(ptAssoc));
+
+  TH1F * bckg = (TH1F *)hist->Clone();
+
+  for (Int_t i = 0; i < bckg->GetXaxis()->GetNbins(); i++) {
+    bckg->SetBinContent(i+1,bcgkFunction->Eval(bckg->GetBinCenter(i+1)));
   }
   return bckg;
 

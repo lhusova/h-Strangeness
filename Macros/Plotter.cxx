@@ -54,6 +54,19 @@ void Plotter::SetHistAxes(TH1 *hist, TString xTitle, TString yTitle) {
   hist->SetStats(kFALSE);
 }
 //_________________________________
+void Plotter::SetHistAxesSmallPad(TH1 *hist, TString xTitle, TString yTitle) {
+  hist->GetXaxis()->SetTitle(Form("%s",xTitle.Data()));
+  hist->GetYaxis()->SetTitle(Form("%s",yTitle.Data()));
+  hist->GetXaxis()->CenterTitle(kFALSE);
+  hist->GetXaxis()->SetTitleSize(0.11);
+  hist->GetYaxis()->SetNdivisions(505);
+  hist->GetYaxis()->SetTitleSize(0.11);
+  hist->GetYaxis()->SetTitleOffset(0.5);
+  hist->GetXaxis()->SetLabelSize(0.11);
+  hist->GetYaxis()->SetLabelSize(0.11);
+  hist->SetStats(kFALSE);
+}
+//_________________________________
 void Plotter::SetGraph(TGraph *gr, TString title,Int_t mStyle, Color_t col,Float_t mSize,Float_t alpha, Int_t line_s, Int_t line_w){
 
   gr->SetTitle(title.Data());
