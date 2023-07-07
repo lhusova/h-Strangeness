@@ -1,6 +1,6 @@
 void prepareFlowCoeff(){
 
-  TFile * flow = new TFile("../data/Flow/v2_pp_HM.root");
+  TFile * flow = new TFile("../data/Flow/v3_pp_HM.root");
   //https://www.hepdata.net/record/ins1784041?version=1
   TFile * spectraPion = new TFile("../data/Flow/spectra_Pion_published.root");
   TFile * spectraKaon = new TFile("../data/Flow/spectra_Kaon_published.root");
@@ -66,7 +66,7 @@ void prepareFlowCoeff(){
   }
   // pions->DrawCopy();
   TGraphErrors * v2_charged  = (TGraphErrors*) v2kaon->Clone();
-  v2_charged->SetName("v2_charged");
+  v2_charged->SetName("v3_charged");
   Double_t v2ch;
   Double_t v2ch_err;
   Double_t bin;
@@ -207,24 +207,32 @@ void prepareFlowCoeff(){
   }
   v2_charged->Draw("ap");
 
+  TGraphErrors * v2_Pion_Combined = (TGraphErrors*) v2pion->Clone();
+  v2_Pion_Combined->SetName("v3_Pion_Combined");
+
+  for (size_t i = 0; i < v2_Pion_Combined->GetN(); i++) {
+    v2_Pion_Combined->SetPointError(i,0.01,TMath::Sqrt(TMath::Power(pionv2Stat[i],2)+TMath::Power(pionv2Syst[i],2)));
+  }
 
   TGraphErrors * v2_Lambda_Combined = (TGraphErrors*) v2Lambda->Clone();
-  v2_Lambda_Combined->SetName("v2_Lambda_Combined");
+  v2_Lambda_Combined->SetName("v3_Lambda_Combined");
 
   for (size_t i = 0; i < v2_Lambda_Combined->GetN(); i++) {
     v2_Lambda_Combined->SetPointError(i,0.01,TMath::Sqrt(TMath::Power(lambdav2Stat[i],2)+TMath::Power(lambdav2Syst[i],2)));
   }
+  v2_Lambda_Combined->RemovePoint(7);
 
   TGraphErrors * v2_K0_Combined = (TGraphErrors*) v2K0s->Clone();
-  v2_K0_Combined->SetName("v2_K0_Combined");
+  v2_K0_Combined->SetName("v3_K0_Combined");
 
   for (size_t i = 0; i < v2_K0_Combined->GetN(); i++) {
     v2_K0_Combined->SetPointError(i,0.01,TMath::Sqrt(TMath::Power(k0sv2Stat[i],2)+TMath::Power(k0sv2Syst[i],2)));
   }
 
-  TFile * newFile = TFile::Open("../data/Flow/prapared_flow.root","RECREATE");
+  TFile * newFile = TFile::Open("../data/Flow/prapared_flow_v3.root","RECREATE");
   v2_charged->Write();
   v2_Lambda_Combined->Write();
   v2_K0_Combined->Write();
+  v2_Pion_Combined->Write();
 
 }
