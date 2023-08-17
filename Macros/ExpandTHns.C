@@ -2,20 +2,20 @@
 
 void ExpandTHns(){
 
-  TFile *file = new TFile("../data/AnalysisResults_Hyperloop_24_06_Pion.root", "READ");
+  TFile *file = new TFile("../data/AnalysisResults_Hyperloop_14_08_V0.root", "READ");
 
-  // TString region[]={"Signal","RightBg","LeftBg"};
-  TString region[]={"p"};
-  // TString particle[]={"K0Short","Lambda","AntiLambda"};
+  TString region[]={"Signal","RightBg","LeftBg"};
+  // TString region[]={"p"};
+  TString particle[]={"K0Short","Lambda","AntiLambda"};
   // TString particle[]={"XiMinus","XiPlus","OmegaMinus","OmegaPlus"};
-  TString particle[]={"Pion"};
+  // TString particle[]={"Pion"};
 
   Int_t nPart = sizeof(particle) / sizeof(TString);
   Int_t nReg = sizeof(region) / sizeof(TString);
   THnF *hNSameFull[3][3];
   TString histoName;
 
-  TFile *fileNew = new TFile("../data/AnalysisResults_Hyperloop_24_06_Pion_Expanded.root", "RECREATE");
+  TFile *fileNew = new TFile("../data/AnalysisResults_Hyperloop_14_08_V0_Expanded.root", "RECREATE");
 
   for (size_t j = 0; j < nPart; j++) {
     for (size_t i = 0; i < nReg; i++) {
