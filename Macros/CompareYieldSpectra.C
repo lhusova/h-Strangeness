@@ -1,6 +1,6 @@
 #include "Plotter.h"
 
-void CompareYieldSpectra(Int_t part=4,Int_t multClass =2){
+void CompareYieldSpectra(Int_t part=0,Int_t multClass =2){
 
   TString finalNames[]={"K_{S}^{0}","(#Lambda+#bar{#Lambda})","(#Xi^{+}+#Xi^{-})","(#Omega^{+}+#Omega^{-})","#pi^{+}+#pi^{-}"};
   TString nameSave[]={"K0s","Lam","Xi","Omega","Pion"};
@@ -9,34 +9,30 @@ void CompareYieldSpectra(Int_t part=4,Int_t multClass =2){
   TString multiplicityNames[]={"minBias","0_1Mult","1_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_70Mult","70_100Mult"};
   TString multiplicityPave[]={"MB","0-1%","1-10%","10-20%","20-30%","30-40%","40-50%","50-70%","70-100%"};
 
-  const Int_t n = 4;
+  const Int_t n = 3;
   TFile *fFile[n];
-  TString file_Suffix[n]={"_fullrangePeak_11_flat","_fullrangePeak_11_long_range","_fullrangePeak_11_flow_modulation_v2","_fullrangePeak_11_flow_modulation_v3"};//{"_fullrange","_fullrangePeak_12","_fullrangePeak_11","_fullrangePeak_1","_fullrangePeak_09"};
-  TString legend[n] = {"ZYAM","long range","flow: v2", "flow: v2+v3"};//{"|#Delta#eta| < 1.4","|#Delta#eta| < 1.2","|#Delta#eta| < 1.1","|#Delta#eta| < 1","|#Delta#eta| < 0.9"};
+  TString file_Suffix[n]={"_fullrangePeak_11_flat","_fullrangePeak_11_long_range","_fullrangePeak_11_flow_modulation_v2"};//,"_fullrangePeak_11_flow_modulation_v3"};//{"_fullrange","_fullrangePeak_12","_fullrangePeak_11","_fullrangePeak_1","_fullrangePeak_09"};
+  TString legend[n] = {"ZYAM","long range","flow: v2"};//, "flow: v2+v3"};//{"|#Delta#eta| < 1.4","|#Delta#eta| < 1.2","|#Delta#eta| < 1.1","|#Delta#eta| < 1","|#Delta#eta| < 0.9"};
   TH1F * spectrum[n];
   TH1F * ratio[n-1];
-  Color_t col[n]={kRed+1,kRed-7,kOrange+7,kViolet-5};//,kPink-5};
-  Int_t marker[n]={20,25,27,30};//,28};
+  Color_t col[n]={kGreen+2,kBlue,kMagenta};//,kViolet-5};//,kPink-5};
+  Int_t marker[n]={20,20,20};//,30};//,28};
 
-  TCanvas *can = new TCanvas("can","",500,600);
-  TPad * pad1 = new TPad("pad1","pad1",0.001,0.3,0.999,0.999);
-  pad1 ->SetMargin(0.12,0.02,0.0,0.05);
-  pad1 ->Draw();
-  pad1->SetTicky();
-  pad1->SetTickx();
+  TCanvas *can = Plotter::CreateCanvas(Form("c"),700,750,true);
+
   TPad * pad2 = new TPad("pad2","pad2",0.001,0.001,0.999,0.3);
-  pad2 ->SetMargin(0.12,0.02,0.25,0.0);
-  pad2 ->Draw();
+  pad2->SetMargin(0.12,0.02,0.25,0.01);
+  pad2->Draw();
   pad2->SetTicky();
   pad2->SetTickx();
 
   TLegend *leg = Plotter::CreateLegend(0.7, 0.95, 0.15, 0.45,0.05);
 
   for (Int_t i = 0; i < n; i++) {
-    fFile[i] = new TFile(Form("../data/Yields/%s/Yields_%s_%s%s.root",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),file_Suffix[i].Data()));
-    spectrum[i] = (TH1F *) fFile[i]->Get("fHistNear");
+    fFile[i] = new TFile(Form("../data/DataThin_Uncorrected_MixCorrected/Yields/%s/Yields_%s_%s%s_ptTrigg1.root",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),file_Suffix[i].Data()));
+    spectrum[i] = (TH1F *) fFile[i]->Get("fHistUE");
 
-    pad1->cd();
+    can->GetPadSave()->cd();
     spectrum[i]->GetYaxis()->SetMaxDigits(2);
     Plotter::SetHist(spectrum[i],"",marker[i],col[i],1.);
     if(i==0) {
@@ -47,10 +43,10 @@ void CompareYieldSpectra(Int_t part=4,Int_t multClass =2){
       pave->AddText("pp, 13.6 TeV");
       pave->AddText(Form("%s",multiplicityPave[multClass].Data()));
       pave->AddText(Form("h-%s",finalNames[part].Data()));
-      pave->AddText(Form("3 < #font[12]{p}^{trigg}_{T} < 20 GeV/#font[12]{c}"));
+      pave->AddText(Form("1 < #font[52]{p}^{trigg}_{T} < 2 GeV/#font[52]{c}"));
       pave->AddText("|#Delta#eta| < 1.1");
-      pave->AddText("Near-side, |#Delta#varphi|<#pi/2");
-      // pave->AddText("Underlying event");
+      // pave->AddText("Near-side, |#Delta#varphi|<#pi/2");
+      pave->AddText("Underlying event");
       pave->Draw("same");
     }
     else spectrum[i]->DrawCopy("same");
@@ -68,9 +64,9 @@ void CompareYieldSpectra(Int_t part=4,Int_t multClass =2){
         ratio[i-1]->DrawCopy();
       }
       else ratio[i-1]->DrawCopy("same");
-      Plotter::DrawUnity(kBlack);
+      Plotter::DrawUnity(kBlack,1,0,15);
     }
   }
-can->SaveAs(Form("../Plots/Checks/background/Yields_Near_%s_%s.pdf",nameSave[part].Data(),multiplicityPave[multClass].Data()));
+// can->SaveAs(Form("../Plots/Checks/background/Yields_Near_%s_%s.pdf",nameSave[part].Data(),multiplicityPave[multClass].Data()));
 
 }

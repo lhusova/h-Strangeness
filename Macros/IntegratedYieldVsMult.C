@@ -1,6 +1,6 @@
 #include "Plotter.h"
 
-void IntegratedYieldVsMult(Int_t iPart = 2){
+void IntegratedYieldVsMult(Int_t iPart = 0){
 
   if(iPart>4) {
     cout<< "Error!!! Assoc particle not defined !!!" << endl;
@@ -18,6 +18,7 @@ void IntegratedYieldVsMult(Int_t iPart = 2){
   TString paveRegions[3] = {"Near-side","Away-side","Underlying event"};
   Color_t colRegions[3] = {kRed+1,kBlue+1,kGreen+2};
   Int_t markers[4] = {20,21,29,33};
+  // Double_t ptTriggBins[]={2.,4.,6.,10.,100};
   Double_t ptTriggBins[]={0.,1.,2.,3.,100};
 
   TFile * file[10][4];
@@ -67,15 +68,15 @@ void IntegratedYieldVsMult(Int_t iPart = 2){
 
   for (Int_t iMult = 0; iMult < 9; iMult++) {
     for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++) {
-      file[iMult][iPtTrigg] = new TFile(Form("../data/Yields/%s/Yields_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root",particleName[iPart].Data(),particleName[iPart].Data(),multiplicityNames[iMult].Data(),iPtTrigg));
-      for (Int_t iReg = 0; iReg < 3; iReg++) {
+      file[iMult][iPtTrigg] = new TFile(Form("../data/DataThin_Uncorrected_MixCorrected/Yields/%s/Yields_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root",particleName[iPart].Data(),particleName[iPart].Data(),multiplicityNames[iMult].Data(),iPtTrigg));
+      for (Int_t iReg = 2; iReg < 3; iReg++) {
         fProj[iMult][iPtTrigg][iReg] = (TH1F *) file[iMult][iPtTrigg]->Get(namesRegions[iReg].Data());
-        can[iMult][iPtTrigg][iReg] = Plotter::CreateCanvas(Form("can%i%i",iMult,iReg));
+        can[iMult][iPtTrigg][iReg] = Plotter::CreateCanvas(Form("can%i%i%i",iMult,iPtTrigg,iReg));
         if(iReg==2)fProj[iMult][iPtTrigg][iReg]->Scale(50);
-        fProj[iMult][iPtTrigg][iReg]->Fit(boltzmann,"mer");
-        fProj[iMult][iPtTrigg][iReg]->Fit(levy,"mer");
-        fProj[iMult][iPtTrigg][iReg]->Fit(fermiDir,"mer");
-        fProj[iMult][iPtTrigg][iReg]->Fit(mT,"mer");
+        // fProj[iMult][iPtTrigg][iReg]->Fit(boltzmann,"mer");
+        // fProj[iMult][iPtTrigg][iReg]->Fit(levy,"mer");
+        // fProj[iMult][iPtTrigg][iReg]->Fit(fermiDir,"mer");
+        // fProj[iMult][iPtTrigg][iReg]->Fit(mT,"mer");
         levy->SetLineColor(kBlue);
         boltzmann->SetLineColor(kMagenta);
         mT->SetLineColor(kGreen+2);
@@ -83,17 +84,17 @@ void IntegratedYieldVsMult(Int_t iPart = 2){
         fProj[iMult][iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0,fProj[iMult][iPtTrigg][iReg]->GetMaximum()*1.2);
         fProj[iMult][iPtTrigg][iReg]->GetXaxis()->SetRangeUser(0,15);
         fProj[iMult][iPtTrigg][iReg]->DrawCopy();
-        fermiDir->DrawCopy("same");
-        levy->DrawCopy("same");
-        boltzmann->DrawCopy("same");
-        mT->DrawCopy("same");
+        // fermiDir->DrawCopy("same");
+        // levy->DrawCopy("same");
+        // boltzmann->DrawCopy("same");
+        // mT->DrawCopy("same");
         if(iMult==0&&iReg==0&&iPtTrigg==0){
           leg->AddEntry(fermiDir,"Fermi-Dirac","l");
           leg->AddEntry(levy,"Levy-Tsallis","l");
           leg->AddEntry(boltzmann,"Boltzmann","l");
           leg->AddEntry(mT,"m_{T} scaling","l");
         }
-        leg->Draw();
+        // leg->Draw();
 
         pave[iMult][iPtTrigg][iReg] = new TPaveText();
         Plotter::SetPaveText(pave[iMult][iPtTrigg][iReg],42,0.05, 0, 0,33,0,0.55,0.97, 0.6,0.95);
@@ -101,21 +102,26 @@ void IntegratedYieldVsMult(Int_t iPart = 2){
         pave[iMult][iPtTrigg][iReg]->AddText("pp, 13.6 TeV");
         pave[iMult][iPtTrigg][iReg]->AddText(Form("%s",multiplicityPave[iMult].Data()));
         pave[iMult][iPtTrigg][iReg]->AddText(Form("h-%s",finalNames[iPart].Data()));
-        pave[iMult][iPtTrigg][iReg]->AddText(Form("%g < #font[12]{p}^{trigg}_{T} < %g GeV/#font[12]{c}",ptTriggBins[iPtTrigg],ptTriggBins[iPtTrigg+1]));
+        pave[iMult][iPtTrigg][iReg]->AddText(Form("%g < #font[52]{p}^{trigg}_{T} < %g GeV/#font[52]{c}",ptTriggBins[iPtTrigg],ptTriggBins[iPtTrigg+1]));
         pave[iMult][iPtTrigg][iReg]->AddText("|#Delta#eta| < 1");
         pave[iMult][iPtTrigg][iReg]->AddText(paveRegions[iReg].Data());
         pave[iMult][iPtTrigg][iReg]->Draw("same");
 
-        yield=fProj[iMult][iPtTrigg][iReg]->Integral(1,5,"width");
+        // yield=fProj[iMult][iPtTrigg][iReg]->Integral(0,8,"width");
+        yield=0.;
+        for (size_t i = 1; i < 7; i++) {
+          yield+=fProj[iMult][iPtTrigg][iReg]->GetBinContent(i)*fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i);
+        }
+        cout << iMult << "___" << iPtTrigg << "_____" << yield << endl;
         // yield+=fermiDir->Integral(0,0.5);
-        yield+=fermiDir->Integral(6,100);
+        // yield+=fermiDir->Integral(6,100);
 
         histYield[iPtTrigg][iReg]->SetBinContent(9-iMult,yield);
         histYield[iPtTrigg][iReg]->SetBinError(9-iMult,0.001);
         histYield[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(iMult+1,labels[iMult]);
         //TODO: error propagation!!!
 
-        can[iMult][iPtTrigg][iReg]->SaveAs(Form("../Plots/FitPt/%s/Ptspectrum_%s_%s_ptTrigg%d.pdf",particleName[iPart].Data(),namesRegions[iReg].Data(),multiplicityNames[iMult].Data(),iPtTrigg));
+        can[iMult][iPtTrigg][iReg]->SaveAs(Form("../Plots/FitPt/%s/Uncorrected/Ptspectrum_%s_%s_ptTrigg%d.pdf",particleName[iPart].Data(),namesRegions[iReg].Data(),multiplicityNames[iMult].Data(),iPtTrigg));
       }
     }
   }
@@ -123,19 +129,19 @@ void IntegratedYieldVsMult(Int_t iPart = 2){
   TLegend *legPtTrigg = Plotter::CreateLegend(0.35, 0.65, 0.65, 0.8,0.05);
   TCanvas * canYield = Plotter::CreateCanvas(Form("canY"));
 
-  histYield[2][0]->GetYaxis()->SetRangeUser(-0.002,0.199);
-  for (size_t i = 0; i < 3; i++) {
-    for (Int_t iPtTrigg = 3; iPtTrigg < 4; iPtTrigg++)
+  // histYield[2][0]->GetYaxis()->SetRangeUser(-0.002,0.199);
+  for (size_t i = 2; i < 3; i++) {
+    for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++)
     {
       Plotter::SetHist(histYield[iPtTrigg][i],"",markers[iPtTrigg],colRegions[i],1.);
-      if(i==0&&iPtTrigg==3){
+      if(i==2&&iPtTrigg==0){
         Plotter::SetHistAxes(histYield[iPtTrigg][i],"","Y");
         histYield[iPtTrigg][i]->DrawCopy();
       }
       else histYield[iPtTrigg][i]->DrawCopy("same");
-      if(i==0) legPtTrigg->AddEntry(histYield[iPtTrigg][i],Form("%g < #font[12]{p}^{trigg}_{T} < %g GeV/#font[12]{c}",ptTriggBins[iPtTrigg],ptTriggBins[iPtTrigg+1]),"p");
+      if(i==2) legPtTrigg->AddEntry(histYield[iPtTrigg][i],Form("%g < #font[52]{p}^{trigg}_{T} < %g GeV/#font[52]{c}",ptTriggBins[iPtTrigg],ptTriggBins[iPtTrigg+1]),"p");
     }
-    legYield->AddEntry(histYield[3][i],paveRegions[i].Data(),"pl");
+    legYield->AddEntry(histYield[0][i],paveRegions[i].Data(),"pl");
   }
 
   TPaveText * paveYields = new TPaveText();
@@ -144,11 +150,12 @@ void IntegratedYieldVsMult(Int_t iPart = 2){
   paveYields->AddText("pp, 13.6 TeV");
   paveYields->AddText(Form("h-%s",finalNames[iPart].Data()));
   paveYields->AddText("|#Delta#eta| < 1.1");
-  paveYields->AddText("3 < #font[12]{p}^{trigg}_{T} < 100 GeV/#font[12]{c}");
-  // paveYields->AddText("Underlying Event");
+  paveYields->AddText("0 < #font[52]{p}^{assoc}_{T} < 8 GeV/#font[52]{c}");
+  paveYields->AddText("Underlying Event");
+  // paveYields->AddText("Near-side");
   paveYields->Draw("same");
-  legYield->Draw();
-  // legPtTrigg->Draw();
+  // legYield->Draw();
+  legPtTrigg->Draw();
 
 
 

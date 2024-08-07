@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# array_AssocParticles=("K0Short" "Lambda" "AntiLambda")
+array_AssocParticles=("K0Short")
+# "Lambda" "AntiLambda")
 # array_AssocParticles=("Pion")
-array_AssocParticles=( "XiMinus" "XiPlus" "OmegaMinus" "OmegaPlus")
+# array_AssocParticles=( "XiMinus" "XiPlus" "OmegaMinus" "OmegaPlus")
 array_InvMassRegions=("LeftBg" "Signal" "RightBg")
 # array_InvMassRegions=("p" )
 for i in ${!array_AssocParticles[@]};

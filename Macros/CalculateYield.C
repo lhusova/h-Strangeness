@@ -4,7 +4,7 @@ TH1F * GetBackgroundHist(TH1F* hist);
 TH1F * GetBackgroundLongRange(TH1F* hist,TH2F * hist2d);
 TH1F * GetBackgroundFlow(TH1F* hist,Int_t part, Double_t meanPtTrigg, Double_t ptAssoc, TFile *  fileFlow, TFile *  fileFlow_v3,Bool_t include_v3);
 
-void CalculateYield(Int_t part=3,Int_t ptTriggBin = 2, Int_t multClass =0, Int_t bckg = 0){
+void CalculateYield(Int_t part=0,Int_t ptTriggBin = 1, Int_t multClass =1, Int_t bckg = 1){
 
   Int_t particleType =part;
   if(part==2)particleType=3;
@@ -29,16 +29,18 @@ void CalculateYield(Int_t part=3,Int_t ptTriggBin = 2, Int_t multClass =0, Int_t
   Int_t nFile = sizeof(InvMassRanges) / sizeof(TString);
 
   for (Int_t i = 0; i < nFile; i++) {
-    fFile[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_%s.root",name[particleType].Data(),InvMassRanges[i].Data(),name[particleType].Data(),multiplicityNames[multClass].Data()));
-    if(part>0&&part<4) fFile2[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_%s_%s_%s.root",name[particleType+1].Data(),InvMassRanges[i].Data(),name[particleType+1].Data(),multiplicityNames[multClass].Data()));
+    fFile[i] = new TFile(Form("../data/LongTrain_2Aug/%s/MixCorrected_%s_%s_%s.root",name[particleType].Data(),InvMassRanges[i].Data(),name[particleType].Data(),multiplicityNames[multClass].Data()));
+    // fFile[i] = new TFile(Form("../FromKai/RootFiles/Shoving/MixCorrected/MixCorrectedMC_3.root"));
+    if(part>0&&part<4) fFile2[i] = new TFile(Form("../data/AutoCorrelations/MixCorrected_noAutoCorr/%s/MixCorrected_%s_%s_%s.root",name[particleType+1].Data(),InvMassRanges[i].Data(),name[particleType+1].Data(),multiplicityNames[multClass].Data()));
   }
-  TFile * fFileTrigger = new TFile("../data/AnalysisResults_Hyperloop_14_08_Cascade.root");
+  TFile * fFileTrigger = new TFile("../data/LongTrain_2Aug/AnalysisResults.root");
   TH2F* histTriggers;
   if(part<2) histTriggers = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesV0");
   else if(part<4)histTriggers = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesCascade");
   else histTriggers = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesPion");
 
   Double_t ptTriggBins[]={0.,1.,2.,3.,100};
+  // Double_t ptTriggBins[]={2.,4.,6.,10.,100};
   if(multClass>0)histTriggers->GetYaxis()->SetRange(multClass,multClass);
   TH1F * hist1DTriggers = (TH1F *) histTriggers->ProjectionX();
   Float_t nTrigg= hist1DTriggers->Integral(hist1DTriggers->FindBin(ptTriggBins[ptTriggBin]),hist1DTriggers->FindBin(ptTriggBins[ptTriggBin+1]-0.1));
@@ -63,7 +65,7 @@ void CalculateYield(Int_t part=3,Int_t ptTriggBin = 2, Int_t multClass =0, Int_t
   TH1D * fHistAway = new TH1D("fHistAway","",nPtBins,ptBins);
   TH1D * fHistUE = new TH1D("fHistUE","",nPtBins,ptBins);
 
-  TFile * fFileNew = TFile::Open (Form("../data/Yields/%s/Yields_%s_%s_fullrangePeak_11_%s_ptTrigg%d.root",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),nameBackground[bckg].Data(),ptTriggBin),"RECREATE");
+  TFile * fFileNew = TFile::Open (Form("../data/LongTrain_2Aug/%s/Yields_%s_%s_fullrangePeak_11_%s_ptTrigg%d.root",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),nameBackground[bckg].Data(),ptTriggBin),"RECREATE");
   hist1DTriggers->Write();
   for (Int_t iPt = 0; iPt < nPtBins; iPt++) {
     for (Int_t iFile = 0; iFile < nFile; iFile++) { // side-band subtraction
@@ -117,17 +119,17 @@ void CalculateYield(Int_t part=3,Int_t ptTriggBin = 2, Int_t multClass =0, Int_t
     yields[1][iPt]=fHistCorrectedProjection[iPt]->IntegralAndError(fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()-TMath::Pi()/2),fHistCorrectedProjection[iPt]->FindBin(TMath::Pi()+TMath::Pi()/2),yields_err[1][iPt],"width");
     fHistNear->SetBinContent(iPt+1,yields[0][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
     fHistNear->SetBinError(iPt+1,yields_err[0][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
-    fHistAway->SetBinContent(iPt+1,yields[1][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
-    fHistAway->SetBinError(iPt+1,yields_err[1][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
+    // fHistAway->SetBinContent(iPt+1,yields[1][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
+    // fHistAway->SetBinError(iPt+1,yields_err[1][iPt]/(ptBins[iPt+1]-ptBins[iPt]));
   }
 
-  Plotter::SetHistAxes(fHistNear,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","1/#font[12]{N}_{Trigg}d#font[12]{N}/d#font[12]{p}_{T}");
+  Plotter::SetHistAxes(fHistNear,"#font[52]{p}^{assoc}_{T} (GeV/#font[52]{c})","1/#font[52]{N}_{Trigg}d#font[52]{N}/d#font[52]{p}_{T}");
   Plotter::SetHist(fHistNear,"",20,kRed+1,1.);
 
-  Plotter::SetHistAxes(fHistAway,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","1/#font[12]{N}_{Trigg}d#font[12]{N}/d#font[12]{p}_{T}");
+  Plotter::SetHistAxes(fHistAway,"#font[52]{p}^{assoc}_{T} (GeV/#font[52]{c})","1/#font[52]{N}_{Trigg}d#font[52]{N}/d#font[52]{p}_{T}");
   Plotter::SetHist(fHistAway,"",20,kBlue+1,1.);
 
-  Plotter::SetHistAxes(fHistUE,"#font[12]{p}^{assoc}_{T} (GeV/#font[12]{c})","1/#font[12]{N}_{Trigg}d#font[12]{N}/d#font[12]{p}_{T}");
+  Plotter::SetHistAxes(fHistUE,"#font[52]{p}^{assoc}_{T} (GeV/#font[52]{c})","1/#font[52]{N}_{Trigg}d#font[52]{N}/d#font[52]{p}_{T}");
   Plotter::SetHist(fHistUE,"",20,kGreen+1,1.);
 
   TCanvas *can = Plotter::CreateCanvas("c");
@@ -135,12 +137,12 @@ void CalculateYield(Int_t part=3,Int_t ptTriggBin = 2, Int_t multClass =0, Int_t
   can->GetPadSave()->SetLogy();
   fHistNear->GetYaxis()->SetRangeUser(0.5*fHistUE->GetMinimum(),1.5*fHistNear->GetMaximum());
   fHistNear->DrawCopy("");
-  if(bckg!=1)fHistAway->DrawCopy("p same");
+  // fHistAway->DrawCopy("p same");
   fHistUE->DrawCopy("p same");
 
   hist1DTriggers->Write();
   fHistNear->Write();
-  fHistAway->Write();
+  // fHistAway->Write();
   fHistUE->Write();
 
   TPaveText *pave = new TPaveText();
@@ -149,7 +151,7 @@ void CalculateYield(Int_t part=3,Int_t ptTriggBin = 2, Int_t multClass =0, Int_t
   pave->AddText("pp, 13.6 TeV");
   pave->AddText(Form("%s",multiplicityPave[multClass].Data()));
   pave->AddText(Form("h-%s",finalNames[part].Data()));
-  pave->AddText(Form("%g < #font[12]{p}^{trigg}_{T} < %g GeV/#font[12]{c}",ptTriggBins[ptTriggBin],ptTriggBins[ptTriggBin+1]));
+  pave->AddText(Form("%g < #font[52]{p}^{trigg}_{T} < %g GeV/#font[52]{c}",ptTriggBins[ptTriggBin],ptTriggBins[ptTriggBin+1]));
   pave->AddText("|#Delta#eta| < 1.1");
   pave->Draw("same");
 
@@ -159,7 +161,7 @@ void CalculateYield(Int_t part=3,Int_t ptTriggBin = 2, Int_t multClass =0, Int_t
   leg->AddEntry(fHistUE,"Underlying event #times 1/50","pl");
   leg->Draw("same");
 
-  can->SaveAs(Form("../Plots/Yields/%s/Yield_%s_%s_fullrangePeak_11_%s_ptTrigg%d.pdf",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),nameBackground[bckg].Data(),ptTriggBin));
+  // can->SaveAs(Form("../Plots/Yields/%s/Uncorrected/Yield_%s_%s_fullrangePeak_11_%s_ptTrigg%d.pdf",nameSave[part].Data(),nameSave[part].Data(),multiplicityNames[multClass].Data(),nameBackground[bckg].Data(),ptTriggBin));
   fFileNew->Close();
 }
 //____________________________________________________________________
@@ -200,8 +202,14 @@ TH1F * GetBackgroundLongRange(TH1F* hist,TH2F * hist2d){
   TH1F * histBckg = (TH1F*) projLeft->Clone();
   histBckg->Add(projRight);
 
-  // histBckg->Scale(hist->GetBinContent(36)/histBckg->GetBinContent(36));
-   histBckg->Scale(hist->GetBinContent(17)/histBckg->GetBinContent(17));
+  TH1F * fHistZyam = GetBackgroundHist(hist);
+
+  histBckg->Scale(hist->GetBinContent(36)/histBckg->GetBinContent(36));
+  // for (size_t i = 16; i < histBckg->GetXaxis()->GetNbins(); i++) {
+  //   histBckg->SetBinContent(i+1,fHistZyam->GetBinContent(i+1));
+  //   histBckg->SetBinError(i+1,fHistZyam->GetBinError(i+1));
+  // }
+   // histBckg->Scale(hist->GetBinContent(17)/histBckg->GetBinContent(17));
 
   return histBckg;
 }

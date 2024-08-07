@@ -8,7 +8,7 @@ std::vector<double> GetAxisEdges(TH1C *hist){
   return returnArray;
 }
 
-THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoName = "correlate-strangeness/sameEvent/Signal/K0Short"){
+THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoName = "correlate-strangeness/sameEvent/Signal/K0Short", Bool_t MCgen =kTRUE){
   // returns THnF with expanded axes
   // step 1: grab the necessary 1D axes from the reference TH1Cs
   TH1C *hDPhi = (TH1C*) file->Get("correlate-strangeness/axes/hDeltaPhiAxis");
@@ -31,7 +31,7 @@ THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoN
   expandedAxes.emplace_back(axisPtAssoc);
   expandedAxes.emplace_back(axisPtTrigg);
   expandedAxes.emplace_back(axisVtxZ);
-  expandedAxes.emplace_back(axisMult);
+
 
   Int_t nbins[6];
   nbins[0] = hDPhi->GetNbinsX();
@@ -44,12 +44,22 @@ THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoN
   //  The constructor we want to use
   //  THn(const char *name, const char *title, Int_t dim, const Int_t *nbins,
   //      const std::vector<std::vector<double>> &xbins);
-  THnF *hReturnHisto = new THnF(newHistoName.Data(), "", 6, nbins, expandedAxes);
+
 
   // get the information to populate
   cout<<"Loading and expanding histogram: "<<histoName.Data()<<endl;
   THnF *hNd = (THnF*) file->Get(histoName.Data());
+  if(MCgen){
 
+    std::vector<double> axisMult {-1, 0, 200, 400, 600, 800, 1000, 1400, 1800, 2300, 2800, 3300, 4000, 5000, 6000,8000};//= GetAxisEdges((TH1C*)hNd->Projection(5));
+    expandedAxes.emplace_back(axisMult);
+    nbins[5] = hNd->GetAxis(5)->GetNbins()+2;
+  }
+  else{
+    expandedAxes.emplace_back(axisMult);
+  }
+  
+  THnF *hReturnHisto = new THnF(newHistoName.Data(), "", 6, nbins, expandedAxes);
   Int_t coordinate[6];
   Int_t coordinateNew[6];
   double content;
@@ -60,7 +70,8 @@ THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoN
         for(Int_t i4=0; i4<nbins[3]; i4++){
           for(Int_t i5=0; i5<nbins[4]; i5++){
             for(Int_t i6=0; i6<nbins[5]; i6++){
-              coordinate[0] = i1; coordinate[1] = i2; coordinate[2] = i3; coordinate[3] = i4; coordinate[4] = i5; coordinate[5] = i6;
+              coordinate[0] = i1; coordinate[1] = i2; coordinate[2] = i3; coordinate[3] = i4; coordinate[4] = i5;
+              coordinate[5] = i6;
               coordinateNew[0] = i1+1; coordinateNew[1] = i2+1; coordinateNew[2] = i3+1; coordinateNew[3] = i4+1; coordinateNew[4] = i5+1; coordinateNew[5] = i6+1;
               content = hNd->GetBinContent(coordinate);
               hReturnHisto->SetBinContent(coordinateNew, content);

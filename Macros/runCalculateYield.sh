@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for i in {3..3};
+for i in {0..0};
 do
   for j in {0..8};
   do
