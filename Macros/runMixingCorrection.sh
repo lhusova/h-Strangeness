@@ -10,7 +10,7 @@ for i in ${!array_AssocParticles[@]};
 do
   for j in ${!array_InvMassRegions[@]};
   do
-    for imult in {0..7}
+    for imult in {0..0}
     do
       root.exe "MixingCorrection.C(\"${array_AssocParticles[$i]}\",\"${array_InvMassRegions[$j]}\",$imult)" -q -b
     done

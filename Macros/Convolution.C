@@ -33,12 +33,12 @@ int IsAtEdge(TH1F* hist, float value){
   return returnValue;
 };
 
-void Convolution(Int_t mult_i = 3, Int_t iPtTrigger = 0){
+void Convolution(Int_t mult_i = 3, Int_t iPtTrigger = 3){
 
 
-  TFile * fFile = new TFile (Form("../data/AnalysisResults_ForMC_minBiasRuns.root"));
-  TDirectoryFile *my_dir = (TDirectoryFile*)fFile->Get("correlate-strangeness/ClosureTest");
-  TFile * fFile2 = new TFile (Form("../data/AnalysisResults_ForMC_minBiasRuns_gen_expanded.root"));
+  TFile * fFile = new TFile (Form("../data/AnalysisResults_ForMCclosure_14_08.root"));
+  TDirectoryFile *my_dir = (TDirectoryFile*)fFile->Get("correlate-strangeness_id14337/ClosureTest");
+  TFile * fFile2 = new TFile (Form("../data/AnalysisResultsMCClosure_GenExpanded.root"));
 
   TString particle[8]={"Pion","K0Short","Lambda","AntiLambda","XiMinus","XiPlus","OmegaMinus","OmegaPlus"};
   TString histTrigger = "fHist3dTrigger";
@@ -47,7 +47,7 @@ void Convolution(Int_t mult_i = 3, Int_t iPtTrigger = 0){
   TString histmix[8] = {"fHist5d2pcMixedPions","fHist5d2pcMixedK0Short","fHist5d2pcMixedLambda","fHist5d2pcMixedAntiLambda","fHist5d2pcMixedXiMinus","fHist5d2pcMixedXiPlus","fHist5d2pcMixedOmegaMinus","fHist5d2pcMixedOmegaPlus"};
   TString histsame[8] = {"fHist5d2pcPions","fHist5d2pcK0Short","fHist5d2pcLambda","fHist5d2pcAntiLambda","fHist5d2pcXiMinus","fHist5d2pcXiPlus","fHist5d2pcOmegaMinus","fHist5d2pcOmegaPlus"};
   Int_t ptTriggerEdge[] = {2,4,6,10,100};
-  TString ptTriggerBinRange[4] = {"0-1","1-2","2-3","3-100"};
+  TString ptTriggerBinRange[4] = {"2-4","4-6","6-10","10-100"};
   TString ptBinRange[9] = {"0-1","1-2","2-3","3-4","4-6","6-8","8-10","10-12","12-15"};
   TString region[]={"Signal","RightBg","LeftBg"};
   const Int_t particles = 1;
@@ -60,15 +60,13 @@ void Convolution(Int_t mult_i = 3, Int_t iPtTrigger = 0){
   TH2F * fHistCorrected[particles][nPtBins];
   Double_t ptBins[nPtBins+1]={0.,1.,2.,3.,4.,6.,8.,10.,12.,15.};
 
-  TFile * fFileNew = TFile::Open (Form("../data/Convolution_MBruns_PtTrigger%d.root",iPtTrigger),"RECREATE");
+  TFile * fFileNew = TFile::Open (Form("../data/Convolution_PtTrigger%d.root",iPtTrigger),"RECREATE");
 
   TH3D* trigger = (TH3D*) my_dir->Get("hTrigger");
   //trigger->Write();
 
-
+  fHistTrigger = (TH1F*) trigger->ProjectionY("triggerEta",trigger->GetXaxis()->FindBin(ptTriggerEdge[iPtTrigger]), trigger->GetXaxis()->FindBin(ptTriggerEdge[iPtTrigger+1]), 1, trigger->GetZaxis()->GetNbins());
   for(int iPtAsso=0; iPtAsso<nPtBins; iPtAsso++){
-
-    fHistTrigger = (TH1F*) trigger->ProjectionY("triggerEta",trigger->GetXaxis()->FindBin(ptTriggerEdge[iPtTrigger]), trigger->GetXaxis()->FindBin(ptTriggerEdge[iPtTrigger+1]), 1, trigger->GetZaxis()->GetNbins());
     //fHistTrigger -> Write();
 
     for(int iPart=1; iPart<particles+1; iPart++){

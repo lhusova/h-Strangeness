@@ -11,12 +11,12 @@ std::vector<double> GetAxisEdges(TH1C *hist){
 THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoName = "correlate-strangeness/sameEvent/Signal/K0Short", Bool_t MCgen =kTRUE){
   // returns THnF with expanded axes
   // step 1: grab the necessary 1D axes from the reference TH1Cs
-  TH1C *hDPhi = (TH1C*) file->Get("correlate-strangeness/axes/hDeltaPhiAxis");
-  TH1C *hDEta = (TH1C*) file->Get("correlate-strangeness/axes/hDeltaEtaAxis");
-  TH1C *hPtAssoc = (TH1C*) file->Get("correlate-strangeness/axes/hPtAssocAxis");
-  TH1C *hVtxZ = (TH1C*) file->Get("correlate-strangeness/axes/hVertexZAxis");
-  TH1C *hMult = (TH1C*) file->Get("correlate-strangeness/axes/hMultAxis");
-  TH1C *hPtTrigg = (TH1C*) file->Get("correlate-strangeness/axes/hPtTriggerAxis");
+  TH1C *hDPhi = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hDeltaPhiAxis");
+  TH1C *hDEta = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hDeltaEtaAxis");
+  TH1C *hPtAssoc = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hPtAssocAxis");
+  TH1C *hVtxZ = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hVertexZAxis");
+  TH1C *hMult = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hMultAxis");
+  TH1C *hPtTrigg = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hPtTriggerAxis");
 
   std::vector<std::vector<double>> expandedAxes;
   std::vector<double> axisDPhi = GetAxisEdges(hDPhi);
@@ -51,14 +51,15 @@ THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoN
   THnF *hNd = (THnF*) file->Get(histoName.Data());
   if(MCgen){
 
-    std::vector<double> axisMult {-1, 0, 200, 400, 600, 800, 1000, 1400, 1800, 2300, 2800, 3300, 4000, 5000, 6000,8000};//= GetAxisEdges((TH1C*)hNd->Projection(5));
+    // std::vector<double> axisMult {-1, 0, 200, 400, 600, 800, 1000, 1400, 1800, 2300, 2800, 3300, 4000, 5000, 6000,8000};//= GetAxisEdges((TH1C*)hNd->Projection(5));
+    std::vector<double> axisMult {-1, 0, 1, 10, 20, 30, 40, 50, 70, 100, 200};
     expandedAxes.emplace_back(axisMult);
     nbins[5] = hNd->GetAxis(5)->GetNbins()+2;
   }
   else{
     expandedAxes.emplace_back(axisMult);
   }
-  
+
   THnF *hReturnHisto = new THnF(newHistoName.Data(), "", 6, nbins, expandedAxes);
   Int_t coordinate[6];
   Int_t coordinateNew[6];

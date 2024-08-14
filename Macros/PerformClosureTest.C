@@ -1,6 +1,6 @@
 #include "Plotter.h"
 
-void PerformClosureTest(Int_t part=0,Int_t ptTriggBin = 1){
+void PerformClosureTest(Int_t part=0,Int_t ptTriggBin = 2){
 
   Int_t particleType =part;
   if(part==3)particleType=5;
@@ -16,34 +16,35 @@ void PerformClosureTest(Int_t part=0,Int_t ptTriggBin = 1){
 
   TFile * fFileMCrec[3];
   // TFile * fFileMCGen[3];//
-  TFile * fFileMCGen=new TFile(Form("../data/MCgen_MixCorrected/%s/MixCorrected_MBruns__%s_MB.root",name[part].Data(),name[part].Data()));
+  TFile * fFileMCGen=new TFile(Form("../data/MixCorrected/%s/MixCorrected_MCgen__%s_MB.root",name[part].Data(),name[part].Data()));
   TString InvMassRanges[] = {"Signal", "LeftBg", "RightBg"};
   // TString InvMassRanges[] = {"p"};
   Int_t nFile = sizeof(InvMassRanges) / sizeof(TString);
 
   for (Int_t i = 0; i < nFile; i++) {
-    fFileMCrec[i] = new TFile(Form("../data/MCrec_MixCorrected/%s/MixCorrected_MBruns_%s_%s_MB.root",name[part].Data(),InvMassRanges[i].Data(),name[part].Data()));
+    fFileMCrec[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_MCrec_TriggerAndAssocPrim_%s_%s_MB.root",name[part].Data(),InvMassRanges[i].Data(),name[part].Data()));
     // fFileMCGen[i] = new TFile(Form("../data/MCrec_MixCorrected/%s/MixCorrected_%s_%s_MB.root",name[part].Data(),InvMassRanges[i].Data(),name[part].Data()));
 
     // if(part>0&&part<4) fFile2[i] = new TFile(Form("../data/AutoCorrelations/MixCorrected_noAutoCorr/%s/MixCorrected_%s_%s_%s.root",name[particleType+1].Data(),InvMassRanges[i].Data(),name[particleType+1].Data(),multiplicityNames[multClass].Data()));
   }
-  TFile * fFileTrigger = new TFile("../data/AnalysisResults_ForMC_minBiasRuns.root");
+  TFile * fFileTrigger = new TFile("../data/AnalysisResults_ForMCclosure_14_08.root");
   TH2F* histTriggersRec;
-  if(part<3) histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesV0");
+  if(part<3) histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness_TriggerAndAssocPrim_id14337/sameEvent/TriggerParticlesV0");
   else if(part<4)histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesCascade");
   else histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesPion");
 
   Double_t ptTriggBins[]={2.,4.,6.,10.,100};
-  // Double_t ptTriggBins[]={0.,2.,3.,100};
+  // Double_t ptTriggBins[]={0.,1.,2.,3.,100};
   TH1F * hist1DTriggersRec = (TH1F *) histTriggersRec->ProjectionX();
   TCanvas *ccdddc = Plotter::CreateCanvas("dddsssd");
   hist1DTriggersRec->DrawCopy();
   Float_t nTrigg= hist1DTriggersRec->Integral(hist1DTriggersRec->FindBin(ptTriggBins[ptTriggBin]),hist1DTriggersRec->FindBin(ptTriggBins[ptTriggBin+1]-0.1));
 
-  TH3F * histTriggersGen = (TH3F*) fFileTrigger->Get("correlate-strangeness/ClosureTest/hTrigger");
+  TH3F * histTriggersGen = (TH3F*) fFileTrigger->Get("correlate-strangeness_id14337/ClosureTest/hTrigger");
   TH1F * hist1DTriggerGen = (TH1F *) histTriggersGen->ProjectionX();
-  TCanvas *ccc = Plotter::CreateCanvas("dddd");
-  hist1DTriggerGen->DrawCopy();
+  // TCanvas *ccc = Plotter::CreateCanvas("dddd");
+  hist1DTriggerGen->SetLineColor(kRed);
+  hist1DTriggerGen->DrawCopy("same");
   Float_t nTriggGen= hist1DTriggerGen->Integral(hist1DTriggerGen->FindBin(ptTriggBins[ptTriggBin]),hist1DTriggerGen->FindBin(ptTriggBins[ptTriggBin+1]-0.1));
 
 
@@ -77,6 +78,7 @@ void PerformClosureTest(Int_t part=0,Int_t ptTriggBin = 1){
     fHistCorrected[iPt][0]->GetXaxis()->SetRangeUser(-1.1,1.1);
 
     fHistCorrectedProjection[iPt] = (TH1F *) fHistCorrected[iPt][0]->ProjectionY();
+    // fHistCorrectedProjection[iPt]->RebinX(2);
     fHistCorrectedProjection[iPt]->SetName(Form("rec%i",iPt));
     fHistCorrectedProjection[iPt]->Scale(1./fHistCorrected[iPt][0]->GetYaxis()->GetBinWidth(2));
     // fHistCorrectedProjection[iPt]->Scale(fHistCorrected[iPt][0]->GetXaxis()->GetBinWidth(2));
@@ -88,6 +90,7 @@ void PerformClosureTest(Int_t part=0,Int_t ptTriggBin = 1){
     fHistGen[iPt] = (TH2F*)fFileMCGen->Get(Form("fHistCorrected_%s_pt%d_ptTrigg%d",name[particleType].Data(),iPt,ptTriggBin));
     fHistGen[iPt]->GetXaxis()->SetRangeUser(-1.1,1.1);
     fHistGenProjection[iPt] = (TH1F *) fHistGen[iPt]->ProjectionY();
+    // fHistGenProjection[iPt]->RebinX(2);
     fHistGenProjection[iPt]->SetName(Form("gen%i",iPt));
     fHistGenProjection[iPt]->Scale(1./fHistGen[iPt]->GetYaxis()->GetBinWidth(2));
     // fHistGenProjection[iPt]->Scale(fHistGen[iPt]->GetXaxis()->GetBinWidth(2));

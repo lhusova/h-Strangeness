@@ -5,27 +5,35 @@ void CalculateEfficiency(Int_t part = 0){
   TString name[]={"Trigger","K0Short","Lambda","AntiLambda","XiMinus","XiPlus","OmegaMinus","OmegaPlus","Pion"};
   TString finalNames[]={"h","K_{S}^{0}","#Lambda","#bar{#Lambda}","#Xi^{-}","#Xi^{+}","#Omega^{-}","#Omega^{+})","#pi^{+}+#pi^{-}"};
 
-  TFile * fFile = new TFile(Form("../data/Data_forEff/AnalysisResultsK0.root"));
+  TFile * fFile = new TFile(Form("../data/AnalysisResults_ForMCclosure_14_08.root"));
 
-  TH2F * genHist  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s",name[part].Data()));
+  TH2F * genHist  = (TH2F *) fFile->Get(Form("correlate-strangeness_id15160/GeneratedWithPV/h%s",name[part].Data()));
   genHist->Sumw2();
   // TH2F * genHist_wPV_yCut  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s_MidYVsMult",name[part].Data()));
   // genHist_wPV_yCut->Sumw2();
   // TH2F * genHist_wPV  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s",name[part].Data()));
   // genHist_wPV->Sumw2();
   if(part==0)name[0]="Track";
-  TH3F * recoHist  = (TH3F *) fFile->Get(Form("correlate-strangeness/h%sEtaVsPtVsPhi",name[part].Data()));
+  TH3F * recoHist  = (TH3F *) fFile->Get(Form("correlate-strangeness_id15160/h%sEtaVsPtVsPhi",name[part].Data()));
   recoHist->Sumw2();
   if(part==0)name[0]="Trigger";
-  // TH3F * recoHist_Bckg  = (TH3F *) fFile->Get(Form("correlate-strangeness/h%sEtaVsPtVsPhiBg",name[part].Data()));
-  // recoHist_Bckg->Sumw2();
+  TH3F * recoHist_Bckg;
+  if(part>0)  {
+    recoHist_Bckg= (TH3F *) fFile->Get(Form("correlate-strangeness_id15160/h%sEtaVsPtVsPhiBg",name[part].Data()));
+    recoHist_Bckg->Sumw2();
+  }
 
   // TH3F * recoHist_SpectrY  = (TH3F *) fFile->Get(Form("correlate-strangeness/h3d%sSpectrumY",name[part].Data()));
   // recoHist_SpectrY->Sumw2();
 
   TH2F * recoEtaPtProj = (TH2F*) recoHist->Project3D("yx");
   recoEtaPtProj->SetName(Form("hEfficiency%s",name[part].Data()));
-  // TH2F * recoEtaPtProj_Bckg = (TH2F*) recoHist_Bckg->Project3D("yx");
+  if(part>0) {
+    TH2F * recoEtaPtProj_Bckg = (TH2F*) recoHist_Bckg->Project3D("yx");
+    recoEtaPtProj_Bckg->SetName(Form("hEfficiency_bckg%s",name[part].Data()));
+    recoEtaPtProj->Add(recoEtaPtProj_Bckg,-1);
+  }
+
   //
   // TH2F * recoEtaPtProj_woBckg = (TH2F *) recoEtaPtProj->Clone();
   // recoEtaPtProj_woBckg->SetName(Form("%s_woBckg",name[part].Data()));
@@ -52,7 +60,7 @@ void CalculateEfficiency(Int_t part = 0){
   gPad->GetFrame()->SetLineColor(0);
   Plotter::Set2DHistAxes(recoEtaPtProj,"#font[52]{p}_{T} (GeV/#font[52]{c})","#eta","#varepsilon","");
   // Plotter::Set2DHistAxes(recoEtaPtProj_woBckg,"p_{T}","#eta","eff","");
-  if(part==0) recoEtaPtProj->GetXaxis()->SetRangeUser(1,50);
+  if(part==0) recoEtaPtProj->GetXaxis()->SetRangeUser(2,50);
   Double_t binCont =0.;
   // for (size_t i = 0; i < recoEtaPtProj->GetXaxis()->GetNbins(); i++) {
   //   for (size_t j = 0; j < recoEtaPtProj->GetYaxis()->GetNbins(); j++) {
@@ -83,10 +91,10 @@ void CalculateEfficiency(Int_t part = 0){
   //
   // //1d Projections
   recoHist->GetYaxis()->SetRangeUser(-0.8,0.8);
-  if(part==0)recoHist->GetXaxis()->SetRangeUser(1,50);
+  if(part==0)recoHist->GetXaxis()->SetRangeUser(2,50);
   // recoHist_Bckg->GetYaxis()->SetRangeUser(-0.8,0.8);
   genHist->GetYaxis()->SetRangeUser(-0.8,0.8);
-  if(part==0)genHist->GetXaxis()->SetRangeUser(1,50);
+  if(part==0)genHist->GetXaxis()->SetRangeUser(2,50);
   //
   TH1F * pt_eff = (TH1F*) recoHist->Project3D("x");
   pt_eff->SetName(Form("pt_%s",name[part].Data()));
@@ -134,7 +142,7 @@ void CalculateEfficiency(Int_t part = 0){
   pave->AddText("ALICE, Work in Progress");
   pave->AddText("pp, 13.6 TeV");
   //
-  if(part==0) pave->AddText(Form("%s, 1 < #font[52]{p}_{T} < 50 GeV/#font[52]{c}",finalNames[part].Data()));
+  if(part==0) pave->AddText(Form("%s, 2 < #font[52]{p}_{T} < 50 GeV/#font[52]{c}",finalNames[part].Data()));
   else pave->AddText(Form("%s, |#eta| < 0.8",finalNames[part].Data()));
   pave->Draw("same");
   //
@@ -215,7 +223,7 @@ void CalculateEfficiency(Int_t part = 0){
   // eta_eff_Ratio->DrawCopy();
   // pave->Draw("same");
 
-  TFile *fileNew = new TFile(Form("../data/Efficiency/Eff_%s_new.root",name[part].Data()), "RECREATE");
+  TFile *fileNew = new TFile(Form("../data/Efficiency/Eff_%s_NewNew.root",name[part].Data()), "RECREATE");
   // eta_eff->Write();
   // eta_eff_wPv->Write();
   // eta_eff_woBckg->Write();
