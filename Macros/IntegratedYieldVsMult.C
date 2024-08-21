@@ -21,7 +21,8 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TString multiplicityPave[] = {"MB", "0-1%", "1-10%", "10-20%", "20-30%", "30-40%", "40-50%", "50-70%", "70-100%"};
   TString namesRegions[3] = {"fHistNear", "fHistAway", "fHistUE"};
   TString paveRegions[3] = {"Near-side", "Away-side", "Underlying event"};
-  Color_t colRegions[3] = {kRed + 1, kBlue + 1, kGreen + 2};
+  TString PhiRegions[3] = {"|#Delta#varphi| < #pi/2", "#pi/2 < |#Delta#varphi| < 3/2#pi", "-#pi/2 < |#Delta#varphi| < 3/2#pi"};
+  Color_t colRegions[3][3] = {{kRed - 4, kRed + 1, kRed + 2}, {kAzure + 7, kBlue, kBlue + 1}, {kGreen + 1, kGreen + 2, kGreen + 3}};
   Int_t markers[4] = {20, 21, 29, 33};
   Double_t ptTriggBins[] = {2., 4., 6., 10., 100};
   // Double_t ptTriggBins[] = {0., 1., 2., 3., 100};
@@ -32,16 +33,20 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TCanvas *canMult[4][3];
   TPaveText *pave[10][4][3];
   TLegend *leg = Plotter::CreateLegend(0.65, 0.95, 0.25, 0.5, 0.05);
-  Double_t yield, erryield, err;
+  Double_t yield, erryield, erryieldSist, err;
 
   // const char *labels[11] = {"90-100%","80-90%","70-80%","60-70%","50-60%","40-50%","30-40%","20-30%","10-20%","0-10%","MB"};
   const char *labels[9] = {"70-100%", "50-70%", "40-50%", "30-40%", "20-30%", "10-20%", "1-10%", "0-1%", "MB"};
   TH1F *histYield[4][3];
+  TH1F *histYieldSist[4][3];
   for (Int_t iPtTrigg = 0; iPtTrigg < 3; iPtTrigg++)
   {
     histYield[iPtTrigg][0] = new TH1F(Form("histYieldNear%d", iPtTrigg), "", 9, 0, 9);
     histYield[iPtTrigg][1] = new TH1F(Form("histYieldAway%d", iPtTrigg), "", 9, 0, 9);
     histYield[iPtTrigg][2] = new TH1F(Form("histYieldUE%d", iPtTrigg), "", 9, 0, 9);
+    histYieldSist[iPtTrigg][0] = new TH1F(Form("histYieldSistNear%d", iPtTrigg), "", 9, 0, 9);
+    histYieldSist[iPtTrigg][1] = new TH1F(Form("histYieldSistAway%d", iPtTrigg), "", 9, 0, 9);
+    histYieldSist[iPtTrigg][2] = new TH1F(Form("histYieldSistUE%d", iPtTrigg), "", 9, 0, 9);
   }
 
   TF1 *boltzmann = new TF1("boltzmann", "x*[0]*TMath::Sqrt([2]*[2]+x*x)*TMath::Exp(-TMath::Sqrt([2]*[2]+x*x)/[1])", 0, 6);
@@ -100,10 +105,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       // mT->DrawCopy("same");
       if (iMult == 0 && iReg == 0 && iPtTrigg == 0)
       {
-        leg->AddEntry(fermiDir, "Fermi-Dirac", "l");
-        leg->AddEntry(levy, "Levy-Tsallis", "l");
-        leg->AddEntry(boltzmann, "Boltzmann", "l");
-        leg->AddEntry(mT, "m_{T} scaling", "l");
+        // leg->AddEntry(fermiDir, "Fermi-Dirac", "l");
+        // leg->AddEntry(levy, "Levy-Tsallis", "l");
+        // leg->AddEntry(boltzmann, "Boltzmann", "l");
+        // leg->AddEntry(mT, "m_{T} scaling", "l");
       }
       // leg->Draw();
 
@@ -121,20 +126,26 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       // yield=fProj[iMult][iPtTrigg][iReg]->Integral(0,8,"width");
       yield = 0.;
       erryield = 0.;
+      Double_t erryieldSist = 0.;
       for (Int_t i = 1; i <= fProj[iMult][iPtTrigg][iReg]->GetNbinsX(); i++)
       {
         yield += fProj[iMult][iPtTrigg][iReg]->GetBinContent(i) * fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i);
         erryield += pow(fProj[iMult][iPtTrigg][iReg]->GetBinError(i), 2) * pow(fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i), 2);
+        // assuming errors are fully correlated in pt
+        erryieldSist += fProj[iMult][iPtTrigg][iReg]->GetBinError(i) * fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i);
       }
       erryield = sqrt(erryield);
-      cout << "Rel error of second pt interval: " << fProj[iMult][iPtTrigg][iReg]->GetBinError(2) / fProj[iMult][iPtTrigg][iReg]->GetBinContent(2) << endl;
-      cout << "Rel error of yield: " << erryield / yield << endl;
+      // cout << "Rel stat error of second pt interval: " << fProj[iMult][iPtTrigg][iReg]->GetBinError(2) / fProj[iMult][iPtTrigg][iReg]->GetBinContent(2) << endl;
+      cout << "Rel stat error of yield: " << erryield / yield << endl;
+      cout << "Rel sist error of yield: " << erryieldSist / yield << endl;
       cout << iMult << "___" << iPtTrigg << "_____" << yield << endl;
       // yield+=fermiDir->Integral(0,0.5);
       // yield+=fermiDir->Integral(6,100);
 
       histYield[iPtTrigg][iReg]->SetBinContent(9 - iMult, yield);
       histYield[iPtTrigg][iReg]->SetBinError(9 - iMult, erryield);
+      histYieldSist[iPtTrigg][iReg]->SetBinContent(9 - iMult, yield);
+      histYieldSist[iPtTrigg][iReg]->SetBinError(9 - iMult, erryieldSist);
       histYield[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(iMult + 1, labels[iMult]);
 
       can[iMult][iPtTrigg][iReg]->SaveAs(Form("../../FitPt%s/Ptspectrum_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
@@ -151,34 +162,38 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fProj[iMult][iPtTrigg][iReg]->DrawCopy();
     }
   }
-  TLegend *legYield = Plotter::CreateLegend(0.15, 0.35, 0.65, 0.8, 0.05);
-  TLegend *legPtTrigg = Plotter::CreateLegend(0.35, 0.65, 0.65, 0.8, 0.05);
+  TLegend *legPtTrigg = Plotter::CreateLegend(0.2, 0.3, 0.7, 0.9, 0.04);
   TCanvas *canYield = Plotter::CreateCanvas(Form("canY"));
 
   for (Int_t iPtTrigg = 0; iPtTrigg < 3; iPtTrigg++)
   {
-    Plotter::SetHist(histYield[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg], 1.);
-    if (iReg == 2 && iPtTrigg == 0)
+    Plotter::SetHist(histYield[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
+    Plotter::SetHist(histYieldSist[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
+    histYield[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.8 * histYield[0][iReg]->GetMinimum(), 1.6 * histYield[2][iReg]->GetMaximum());
+    if (iPtTrigg == 0)
     {
       Plotter::SetHistAxes(histYield[iPtTrigg][iReg], "", "Y");
-      histYield[iPtTrigg][iReg]->DrawCopy();
+      histYield[iPtTrigg][iReg]->DrawCopy("ex0");
     }
     else
-      histYield[iPtTrigg][iReg]->DrawCopy("same");
-    if (iReg == 2)
-      legPtTrigg->AddEntry(histYield[iPtTrigg][iReg], Form("%g < #font[52]{p}^{trigg}_{T} < %g GeV/#font[52]{c}", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1]), "p");
+      histYield[iPtTrigg][iReg]->DrawCopy("same ex0");
+    histYieldSist[iPtTrigg][iReg]->SetFillStyle(0);
+    histYieldSist[iPtTrigg][iReg]->DrawCopy("same e2");
+    legPtTrigg->AddEntry(histYield[iPtTrigg][iReg], Form("%g < #font[52]{p}^{trigg}_{T} < %g GeV/#font[52]{c}", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1]), "p");
   }
-  legYield->AddEntry(histYield[0][iReg], paveRegions[iReg].Data(), "pl");
 
   TPaveText *paveYields = new TPaveText();
-  Plotter::SetPaveText(paveYields, 42, 0.05, 0, 0, 33, 0, 0.55, 0.97, 0.6, 0.95);
+  Plotter::SetPaveText(paveYields, 42, 0.04, 0, 0, 33, 0, 0.7, 0.95, 0.6, 0.90);
   paveYields->AddText("ALICE, Work in Progress");
   paveYields->AddText("pp, 13.6 TeV");
-  paveYields->AddText(Form("h-%s, |#Delta#it{#eta}| < 1.1", finalNames[iPart].Data()));
-  paveYields->AddText(paveRegions[iReg].Data());
-  paveYields->AddText(Form("|#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data()));
+  // paveYields->AddText(Form("h-%s, |#Delta#it{#eta}| < 1.1", finalNames[iPart].Data()));
+  paveYields->AddText(Form("h-%s, |#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data(), finalNames[iPart].Data()));
+  paveYields->AddText(Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()));
+  // paveYields->AddText(Form("|#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data()));
   paveYields->Draw("same");
   legPtTrigg->Draw();
+  canYield->SaveAs(Form("../../YieldsVsMult_%s_%s.pdf", particleName[iPart].Data(), paveRegions[iReg].Data()));
+  canYield->SaveAs(Form("../../YieldsVsMult_%s_%s.png", particleName[iPart].Data(), paveRegions[iReg].Data()));
 
   // PLOT: YIELDS VS PT in MULT CLASSES
   TH1F *fProjScaled[10][4][3];
@@ -224,6 +239,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     // LegendTitle->AddEntry("", "|#Delta#it{#eta}| < 1.1", "");
     LegendTitle->AddEntry("", Form("%s", paveRegions[iReg].Data()), "");
 
+    if (iReg == 2)
+      LimSupSpectra = 9999.99;
+    else
+      LimSupSpectra = 99.99;
     TH1F *hDummy = new TH1F("hDummy", "hDummy", 10000, 0, 15.5);
     for (Int_t i = 1; i <= hDummy->GetNbinsX(); i++)
       hDummy->SetBinContent(i, 1e-12);
@@ -238,6 +257,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     gPad->SetLogy();
     gStyle->SetOptStat(0);
     hDummy->Draw("same");
+    if (iReg == 2)
+      ScaleFactorMB = pow(2, 10);
+    else
+      ScaleFactorMB = pow(2, 8);
 
     for (Int_t iMult = 0; iMult < 9; iMult++)
     {
@@ -292,7 +315,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     canvasPtSpectra->cd();
     padL1->Draw();
     padL1->cd();
-    //gPad->SetLogy();
+    // gPad->SetLogy();
     hDummyRatio->Draw("same");
 
     for (Int_t iMult = 0; iMult < 9; iMult++)

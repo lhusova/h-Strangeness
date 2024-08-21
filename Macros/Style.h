@@ -23,7 +23,7 @@
 #include "TGraphAsymmErrors.h"
 
 Float_t LimSupSpectra = 0.99;
-Float_t LimInfSpectra = 0.4 * 1e-6;
+Float_t LimInfSpectra = 0.4 * 1e-5;//0.4 * 1e-6 for jet
 Float_t xTitle = 15;
 Float_t xOffset = 4;
 Float_t yTitle = 30;
@@ -37,8 +37,8 @@ Float_t yLabelOffset = 0.01;
 Float_t tickX = 0.025;
 Float_t tickY = 0.03;
 
-Float_t LimSupMultRatio = 1.5; //14
-Float_t LimInfMultRatio = 0.5; //1.1 * 1e-1;
+Float_t LimSupMultRatio = 2.5; //1.5 for jet
+Float_t LimInfMultRatio = 0; //0.5 for jet
 Float_t YoffsetSpectraRatio = 1.1;
 Float_t xTitleR = 35;
 Float_t xOffsetR = 1;
