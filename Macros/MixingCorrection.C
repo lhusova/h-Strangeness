@@ -1,8 +1,8 @@
 #include "Plotter.h"
 void ScaleMixing(TH2F * histMix);
 
-void MixingCorrection(TString particle="K0Short",TString region = "",Int_t mult_i = 0){
-  TFile * fFile = new TFile ("../data/AnalysisResultsMCClosure_Rec_NoTriggerEff_Expanded.root");
+void MixingCorrection(TString particle="K0Short",TString region = "Signal",Int_t mult_i = 0){
+  TFile * fFile = new TFile ("../data/AnalysisResultsData_MCrecNoEff_5sigma_Expanded.root");
   // TString multBinsName[]={"0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
   // TString multBinsName[]={"0_1Mult","1_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_70Mult","70_100Mult"};
   TString multBinsName[]={"MB"};
@@ -26,7 +26,7 @@ void MixingCorrection(TString particle="K0Short",TString region = "",Int_t mult_
   TH2F * fHistMixProjection[nPtBins][nPtTriggBins][10];
   TH2F * fHistSameProjection[nPtBins][nPtTriggBins][10];
 
-  TFile * fFileNew = TFile::Open (Form("../data/MixCorrected/%s/MixCorrected_MCrec_NoTriggerEff_%s_%s_%s.root",particle.Data(),region.Data(),particle.Data(),multBinsName[mult_i].Data()),"RECREATE");
+  TFile * fFileNew = TFile::Open (Form("../data/MCrec_MixCorrected/%s/MixCorrected_MCrecNoEff_5sigma_%s_%s_%s.root",particle.Data(),region.Data(),particle.Data(),multBinsName[mult_i].Data()),"RECREATE");
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++) {
     same->GetAxis(3)->SetRange(iPtTrigg+1,iPtTrigg+1);
     mix->GetAxis(3)->SetRange(iPtTrigg+1,iPtTrigg+1);
