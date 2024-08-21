@@ -12,14 +12,14 @@ void IntegratedYieldVsMult(Int_t iPart = 0){
   TString finalNames[]={"K_{S}^{0}","(#Lambda+#bar{#Lambda})","(#Xi^{+}+#Xi^{-})","(#Omega^{+}+#Omega^{-})","#pi^{+}+#pi^{-}"};
   // TString multiplicityNames[]={"0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
   // TString multiplicityPave[]={"0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"};
-  TString multiplicityNames[]={"minBias","0_1Mult","1_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_70Mult","70_100Mult"};
+  TString multiplicityNames[]={"minBias","MB","1_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_70Mult","70_100Mult"};
   TString multiplicityPave[]={"MB","0-1%","1-10%","10-20%","20-30%","30-40%","40-50%","50-70%","70-100%"};
   TString namesRegions[3] = {"fHistNear","fHistAway","fHistUE"};
   TString paveRegions[3] = {"Near-side","Away-side","Underlying event"};
   Color_t colRegions[3] = {kRed+1,kBlue+1,kGreen+2};
   Int_t markers[4] = {20,21,29,33};
-  // Double_t ptTriggBins[]={2.,4.,6.,10.,100};
-  Double_t ptTriggBins[]={0.,1.,2.,3.,100};
+  Double_t ptTriggBins[]={2.,4.,6.,10.,100};
+  // Double_t ptTriggBins[]={0.,1.,2.,3.,100};
 
   TFile * file[10][4];
   TH1F* fProj[10][4][3];
@@ -67,8 +67,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0){
   mT->FixParameter(2,particleMass[iPart]);
 
   for (Int_t iMult = 0; iMult < 9; iMult++) {
-    for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++) {
-      file[iMult][iPtTrigg] = new TFile(Form("../data/DataThin_Uncorrected_MixCorrected/Yields/%s/Yields_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root",particleName[iPart].Data(),particleName[iPart].Data(),multiplicityNames[iMult].Data(),iPtTrigg));
+    for (Int_t iPtTrigg = 2; iPtTrigg < 3; iPtTrigg++) {
+      if(iMult<2) file[iMult][iPtTrigg] = new TFile(Form("../data/Yields/%s/Yields_longTrain_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root",particleName[iPart].Data(),particleName[iPart].Data(),multiplicityNames[iMult].Data(),iPtTrigg));
+      else file[iMult][iPtTrigg] = new TFile(Form("../data/Yields/%s/K0_Yields/Yields_longTrain_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root",particleName[iPart].Data(),particleName[iPart].Data(),multiplicityNames[iMult].Data(),iPtTrigg));
       for (Int_t iReg = 2; iReg < 3; iReg++) {
         fProj[iMult][iPtTrigg][iReg] = (TH1F *) file[iMult][iPtTrigg]->Get(namesRegions[iReg].Data());
         can[iMult][iPtTrigg][iReg] = Plotter::CreateCanvas(Form("can%i%i%i",iMult,iPtTrigg,iReg));
@@ -131,10 +132,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0){
 
   // histYield[2][0]->GetYaxis()->SetRangeUser(-0.002,0.199);
   for (size_t i = 2; i < 3; i++) {
-    for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++)
+    for (Int_t iPtTrigg = 2; iPtTrigg < 3; iPtTrigg++)
     {
       Plotter::SetHist(histYield[iPtTrigg][i],"",markers[iPtTrigg],colRegions[i],1.);
-      if(i==2&&iPtTrigg==0){
+      if(i==2&&iPtTrigg==2){
         Plotter::SetHistAxes(histYield[iPtTrigg][i],"","Y");
         histYield[iPtTrigg][i]->DrawCopy();
       }
@@ -152,7 +153,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0){
   paveYields->AddText("|#Delta#eta| < 1.1");
   paveYields->AddText("0 < #font[52]{p}^{assoc}_{T} < 8 GeV/#font[52]{c}");
   paveYields->AddText("Underlying Event");
-  // paveYields->AddText("Near-side");
+  // paveYields->AddText("Away-side");
   paveYields->Draw("same");
   // legYield->Draw();
   legPtTrigg->Draw();

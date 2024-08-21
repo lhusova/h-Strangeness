@@ -16,20 +16,21 @@ void PerformClosureTest(Int_t part=0,Int_t ptTriggBin = 2){
 
   TFile * fFileMCrec[3];
   // TFile * fFileMCGen[3];//
-  TFile * fFileMCGen=new TFile(Form("../data/MixCorrected/%s/MixCorrected_MCgen__%s_MB.root",name[part].Data(),name[part].Data()));
+  TFile * fFileMCGen=new TFile(Form("../data/MCgen_MixCorrected/%s/MixCorrected_MCgen_20_08__%s_MB.root",name[part].Data(),name[part].Data()));
   TString InvMassRanges[] = {"Signal", "LeftBg", "RightBg"};
   // TString InvMassRanges[] = {"p"};
   Int_t nFile = sizeof(InvMassRanges) / sizeof(TString);
 
   for (Int_t i = 0; i < nFile; i++) {
-    fFileMCrec[i] = new TFile(Form("../data/MixCorrected/%s/MixCorrected_MCrec_TriggerAndAssocPrim_%s_%s_MB.root",name[part].Data(),InvMassRanges[i].Data(),name[part].Data()));
+    fFileMCrec[i] = new TFile(Form("../data/MCrec_MixCorrected/%s/MixCorrected_MCrec_5sigma_20_08_%s_%s_minBias.root",name[part].Data(),InvMassRanges[i].Data(),name[part].Data()));
     // fFileMCGen[i] = new TFile(Form("../data/MCrec_MixCorrected/%s/MixCorrected_%s_%s_MB.root",name[part].Data(),InvMassRanges[i].Data(),name[part].Data()));
 
     // if(part>0&&part<4) fFile2[i] = new TFile(Form("../data/AutoCorrelations/MixCorrected_noAutoCorr/%s/MixCorrected_%s_%s_%s.root",name[particleType+1].Data(),InvMassRanges[i].Data(),name[particleType+1].Data(),multiplicityNames[multClass].Data()));
   }
-  TFile * fFileTrigger = new TFile("../data/AnalysisResults_ForMCclosure_14_08.root");
+  TFile * fFileTrigger = new TFile("../data/AnalysisResults_foMCclosure_5sigma_20_08.root");
+  TFile * fFileTriggerGen = new TFile("../data/AnalysisResults_foMCclosure_5sigma_20_08.root");
   TH2F* histTriggersRec;
-  if(part<3) histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness_TriggerAndAssocPrim_id14337/sameEvent/TriggerParticlesV0");
+  if(part<3) histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesV0");
   else if(part<4)histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesCascade");
   else histTriggersRec = (TH2F*) fFileTrigger->Get("correlate-strangeness/sameEvent/TriggerParticlesPion");
 
@@ -40,13 +41,19 @@ void PerformClosureTest(Int_t part=0,Int_t ptTriggBin = 2){
   hist1DTriggersRec->DrawCopy();
   Float_t nTrigg= hist1DTriggersRec->Integral(hist1DTriggersRec->FindBin(ptTriggBins[ptTriggBin]),hist1DTriggersRec->FindBin(ptTriggBins[ptTriggBin+1]-0.1));
 
-  TH3F * histTriggersGen = (TH3F*) fFileTrigger->Get("correlate-strangeness_id14337/ClosureTest/hTrigger");
+  TH3F * histTriggersGen = (TH3F*) fFileTriggerGen->Get("correlate-strangeness/ClosureTest/hTrigger");
   TH1F * hist1DTriggerGen = (TH1F *) histTriggersGen->ProjectionX();
   // TCanvas *ccc = Plotter::CreateCanvas("dddd");
   hist1DTriggerGen->SetLineColor(kRed);
   hist1DTriggerGen->DrawCopy("same");
   Float_t nTriggGen= hist1DTriggerGen->Integral(hist1DTriggerGen->FindBin(ptTriggBins[ptTriggBin]),hist1DTriggerGen->FindBin(ptTriggBins[ptTriggBin+1]-0.1));
 
+  TCanvas *cTriggRatio = Plotter::CreateCanvas("cTriggRatio");
+  TH1F * hist1DTriggersRecCl = (TH1F *) hist1DTriggersRec->Clone();
+  hist1DTriggersRecCl->SetName("hist1DTriggersRecCl");
+  Plotter::SetHist(hist1DTriggersRecCl,"",20,kBlack,1.);
+  hist1DTriggersRecCl->Divide(hist1DTriggerGen);
+  hist1DTriggersRecCl->DrawCopy();
 
   const Int_t nPtBins = 9;
   Double_t ptBins[]={0.,1.,2.,3.,4.,6.,8.,10.,12,15};

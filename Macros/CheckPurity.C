@@ -2,7 +2,7 @@
 
 void CheckPurity(){
 
-  TFile * fFile = new TFile(Form("../data/Data_forEff/AnalysisResults.root"));
+  TFile * fFile = new TFile(Form("../data/AnalysisResults_ForMCclosure_5sigma.root"));
   TH3F * recoAllTriggers  = (TH3F *) fFile->Get("correlate-strangeness/hTriggerAllSelectedEtaVsPt");
   recoAllTriggers->Sumw2();
   TH3F * recoPrimary  = (TH3F *) fFile->Get("correlate-strangeness/hTriggerPrimaryEtaVsPt");
@@ -10,9 +10,9 @@ void CheckPurity(){
 
   recoPrimary->GetYaxis()->SetRangeUser(-0.8,0.8);
   recoAllTriggers->GetYaxis()->SetRangeUser(-0.8,0.8);
-  TH1F * recoPrimaryMB_pt = (TH1F *)recoPrimary->Project3D("x");
+  TH1F * recoPrimaryMB_pt = (TH1F *)recoPrimary->Project3D("y");
   recoPrimaryMB_pt->SetName("recoPrimaryMB_pt");
-  TH1F * recoAllMB_pt = (TH1F *)recoAllTriggers->Project3D("x");
+  TH1F * recoAllMB_pt = (TH1F *)recoAllTriggers->Project3D("y");
   recoAllMB_pt->SetName("recoAllMB_pt");
 
   TCanvas *c = Plotter::CreateCanvas("c");
@@ -31,10 +31,10 @@ void CheckPurity(){
 
   for (Int_t i = 0; i < 8; i++) {
     recoPrimary->GetZaxis()->SetRange(i+1,i+1);
-    recoPrimary_pt[i] = (TH1F *)recoPrimary->Project3D("x");
+    recoPrimary_pt[i] = (TH1F *)recoPrimary->Project3D("y");
     recoPrimary_pt[i]->SetName(Form("recoPrimary%i_pt",i));
     recoAllTriggers->GetZaxis()->SetRange(i+1,i+1);
-    recoAll_pt[i] = (TH1F *)recoAllTriggers->Project3D("x");
+    recoAll_pt[i] = (TH1F *)recoAllTriggers->Project3D("y");
     recoAll_pt[i]->SetName(Form("recoAll%i_pt",i));
     Plotter::SetHist(recoPrimary_pt[i],"",20,col[i],1.2);
     recoPrimary_pt[i]->Divide(recoAll_pt[i]);
@@ -48,8 +48,8 @@ void CheckPurity(){
   Plotter::SetPaveText(pave,42,0.05, 0, 0,33,0,0.55,0.97, 0.7,0.95);
   pave->AddText("ALICE, Work in Progress");
   pave->AddText("pp, 13.6 TeV");
-  pave->AddText(" |#eta| < 0.8");
-  // pave->AddText(Form("%s, 1 < #font[52]{p}_{T} < 50 GeV/#font[52]{c}",finalNames[part].Data()));
+  // pave->AddText(" |#eta| < 0.8");
+  pave->AddText(Form("2 < #font[52]{p}_{T} < 50 GeV/#font[52]{c}"));
   pave->Draw("same");
 
 }

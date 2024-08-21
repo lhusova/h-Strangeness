@@ -33,12 +33,12 @@ int IsAtEdge(TH1F* hist, float value){
   return returnValue;
 };
 
-void Convolution(Int_t mult_i = 3, Int_t iPtTrigger = 3){
+void Convolution(Int_t mult_i = 3, Int_t iPtTrigger = 0){
 
 
-  TFile * fFile = new TFile (Form("../data/AnalysisResults_ForMCclosure_14_08.root"));
-  TDirectoryFile *my_dir = (TDirectoryFile*)fFile->Get("correlate-strangeness_id14337/ClosureTest");
-  TFile * fFile2 = new TFile (Form("../data/AnalysisResultsMCClosure_GenExpanded.root"));
+  TFile * fFile = new TFile (Form("../data/AnalysisResults_foMCclosure_5sigma_20_08.root"));
+  TDirectoryFile *my_dir = (TDirectoryFile*)fFile->Get("correlate-strangeness/ClosureTest");
+  TFile * fFile2 = new TFile (Form("../data/AnalysisResultsData_MCgen_20_08_Expanded.root"));
 
   TString particle[8]={"Pion","K0Short","Lambda","AntiLambda","XiMinus","XiPlus","OmegaMinus","OmegaPlus"};
   TString histTrigger = "fHist3dTrigger";
@@ -64,7 +64,6 @@ void Convolution(Int_t mult_i = 3, Int_t iPtTrigger = 3){
 
   TH3D* trigger = (TH3D*) my_dir->Get("hTrigger");
   //trigger->Write();
-
   fHistTrigger = (TH1F*) trigger->ProjectionY("triggerEta",trigger->GetXaxis()->FindBin(ptTriggerEdge[iPtTrigger]), trigger->GetXaxis()->FindBin(ptTriggerEdge[iPtTrigger+1]), 1, trigger->GetZaxis()->GetNbins());
   for(int iPtAsso=0; iPtAsso<nPtBins; iPtAsso++){
     //fHistTrigger -> Write();
