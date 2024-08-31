@@ -38,7 +38,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   // const char *labels[11] = {"90-100%","80-90%","70-80%","60-70%","50-60%","40-50%","30-40%","20-30%","10-20%","0-10%","MB"};
   const char *labels[9] = {"70-100%", "50-70%", "40-50%", "30-40%", "20-30%", "10-20%", "1-10%", "0-1%", "MB"};
   TH1F *histYield[4][3];
+  TH1F *histYieldToMB[4][3];
   TH1F *histYieldSist[4][3];
+  TH1F *histYieldSistToMB[4][3];
   for (Int_t iPtTrigg = 0; iPtTrigg < 3; iPtTrigg++)
   {
     histYield[iPtTrigg][0] = new TH1F(Form("histYieldNear%d", iPtTrigg), "", 9, 0, 9);
@@ -195,6 +197,52 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   canYield->SaveAs(Form("../../YieldsVsMult_%s_%s.pdf", particleName[iPart].Data(), paveRegions[iReg].Data()));
   canYield->SaveAs(Form("../../YieldsVsMult_%s_%s.png", particleName[iPart].Data(), paveRegions[iReg].Data()));
 
+  // RATIOS to MB
+  TCanvas *canYieldToMB = Plotter::CreateCanvas(Form("canYToMB"));
+  Int_t BinMB = 0;
+  Float_t Err = 0;
+  Float_t ErrSist = 0;
+  for (Int_t iPtTrigg = 0; iPtTrigg < 3; iPtTrigg++)
+  {
+    histYieldToMB[iPtTrigg][0] = new TH1F(Form("histYieldNearToMB%d", iPtTrigg), "", 8, 0, 8);
+    histYieldToMB[iPtTrigg][1] = new TH1F(Form("histYieldAwayToMB%d", iPtTrigg), "", 8, 0, 8);
+    histYieldToMB[iPtTrigg][2] = new TH1F(Form("histYieldUEToMB%d", iPtTrigg), "", 8, 0, 8);
+    histYieldSistToMB[iPtTrigg][0] = new TH1F(Form("histYieldSistNearToMB%d", iPtTrigg), "", 8, 0, 8);
+    histYieldSistToMB[iPtTrigg][1] = new TH1F(Form("histYieldSistAwayToMB%d", iPtTrigg), "", 8, 0, 8);
+    histYieldSistToMB[iPtTrigg][2] = new TH1F(Form("histYieldSistUEToMB%d", iPtTrigg), "", 8, 0, 8);
+    for (Int_t b = 1; b <= histYieldToMB[iPtTrigg][0]->GetNbinsX(); b++)
+    {
+      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b - 1]);
+      BinMB = histYield[iPtTrigg][0]->GetNbinsX();
+      histYieldToMB[iPtTrigg][iReg]->SetBinContent(b, histYield[iPtTrigg][iReg]->GetBinContent(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB));
+      histYieldSistToMB[iPtTrigg][iReg]->SetBinContent(b, histYieldToMB[iPtTrigg][iReg]->GetBinContent(b));
+      Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      histYieldToMB[iPtTrigg][iReg]->SetBinError(b, Err);
+      histYieldSistToMB[iPtTrigg][iReg]->SetBinError(b, ErrSist);
+    }
+    Plotter::SetHist(histYieldToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
+    Plotter::SetHist(histYieldSistToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
+
+    if (iPtTrigg == 0)
+    {
+      Plotter::SetHistAxes(histYieldToMB[iPtTrigg][iReg], "", "Y/Y_{MB}");
+      histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.7, 1.3);
+      if (iReg == 2)
+        histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 2);
+      histYieldToMB[iPtTrigg][iReg]->DrawCopy("ex0");
+    }
+    else
+      histYieldToMB[iPtTrigg][iReg]->DrawCopy("same ex0");
+    histYieldSistToMB[iPtTrigg][iReg]->SetFillStyle(0);
+    histYieldSistToMB[iPtTrigg][iReg]->DrawCopy("same e2");
+  }
+
+  // paveYields->Draw("same");
+  legPtTrigg->Draw("same");
+  canYieldToMB->SaveAs(Form("../../YieldsVsMultToMB_%s_%s.pdf", particleName[iPart].Data(), paveRegions[iReg].Data()));
+  canYieldToMB->SaveAs(Form("../../YieldsVsMultToMB_%s_%s.png", particleName[iPart].Data(), paveRegions[iReg].Data()));
+
   // PLOT: YIELDS VS PT in MULT CLASSES
   TH1F *fProjScaled[10][4][3];
   TH1F *fProjSistScaled[10][4][3];
@@ -243,17 +291,26 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       LimSupSpectra = 9999.99;
     else
       LimSupSpectra = 99.99;
-    if (iPtTrigg == 0){
-      if (iReg==2) LimInfSpectra = 0.4 * 1e-6;
-      else LimInfSpectra = 0.4 * 1e-5;
+    if (iPtTrigg == 0)
+    {
+      if (iReg == 2)
+        LimInfSpectra = 0.4 * 1e-6;
+      else
+        LimInfSpectra = 0.4 * 1e-5;
     }
-    else if (iPtTrigg == 1){
-      if (iReg==2) LimInfSpectra = 0.4 * 1e-5;
-      else LimInfSpectra = 0.4 * 1e-4;
+    else if (iPtTrigg == 1)
+    {
+      if (iReg == 2)
+        LimInfSpectra = 0.4 * 1e-5;
+      else
+        LimInfSpectra = 0.4 * 1e-4;
     }
-    else{
-      if (iReg==2) LimInfSpectra = 0.4 * 1e-5;
-      else LimInfSpectra = 0.4 * 1e-4;
+    else
+    {
+      if (iReg == 2)
+        LimInfSpectra = 0.4 * 1e-5;
+      else
+        LimInfSpectra = 0.4 * 1e-4;
     }
     TH1F *hDummy = new TH1F("hDummy", "hDummy", 10000, 0, 15.5);
     for (Int_t i = 1; i <= hDummy->GetNbinsX(); i++)
