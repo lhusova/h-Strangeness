@@ -243,6 +243,18 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       LimSupSpectra = 9999.99;
     else
       LimSupSpectra = 99.99;
+    if (iPtTrigg == 0){
+      if (iReg==2) LimInfSpectra = 0.4 * 1e-6;
+      else LimInfSpectra = 0.4 * 1e-5;
+    }
+    else if (iPtTrigg == 1){
+      if (iReg==2) LimInfSpectra = 0.4 * 1e-5;
+      else LimInfSpectra = 0.4 * 1e-4;
+    }
+    else{
+      if (iReg==2) LimInfSpectra = 0.4 * 1e-5;
+      else LimInfSpectra = 0.4 * 1e-4;
+    }
     TH1F *hDummy = new TH1F("hDummy", "hDummy", 10000, 0, 15.5);
     for (Int_t i = 1; i <= hDummy->GetNbinsX(); i++)
       hDummy->SetBinContent(i, 1e-12);
@@ -272,7 +284,6 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
         SizeMult[iMult] = SizeMB;
         ScaleFactorFinal[iMult] = ScaleFactorMB;
       }
-      SizeMult[iMult] = SizeMult[iMult] * 0.8;
       fProjScaled[iMult][iPtTrigg][iReg] = (TH1F *)fProj[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumStatScaled_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
       fProjSistScaled[iMult][iPtTrigg][iReg] = (TH1F *)fProj[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumSistScaled_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
       fProjScaled[iMult][iPtTrigg][iReg]->Scale(ScaleFactorFinal[iMult]);

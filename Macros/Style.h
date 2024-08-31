@@ -23,7 +23,7 @@
 #include "TGraphAsymmErrors.h"
 
 Float_t LimSupSpectra = 0.99;
-Float_t LimInfSpectra = 0.4 * 1e-5;//0.4 * 1e-6 for jet
+Float_t LimInfSpectra = 0.4 * 1e-5; // 0.4 * 1e-6 for jet
 Float_t xTitle = 15;
 Float_t xOffset = 4;
 Float_t yTitle = 30;
@@ -37,8 +37,8 @@ Float_t yLabelOffset = 0.01;
 Float_t tickX = 0.025;
 Float_t tickY = 0.03;
 
-Float_t LimSupMultRatio = 2.5; //1.5 for jet
-Float_t LimInfMultRatio = 0; //0.5 for jet
+Float_t LimSupMultRatio = 2.4; // 1.5 for jet
+Float_t LimInfMultRatio = 0;   // 0.5 for jet
 Float_t YoffsetSpectraRatio = 1.1;
 Float_t xTitleR = 35;
 Float_t xOffsetR = 1;
@@ -56,9 +56,12 @@ Float_t tickYRatio = 0.04;
 Int_t ColorFit[] = {634, 797, 815, 429, 867, 601};
 Int_t ColorModel[] = {kBlue + 1, kGreen + 2};
 Int_t ColorMult[] = {634, 628, 807, kOrange - 4, 797, 815, 418, 429, 867, 856, 601, kViolet, kPink + 9, kPink + 1, 1};
-Float_t SizeMult[] = {2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8};
-Float_t SizeMultRatio[] = {1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8};
-Int_t MarkerMult[] = {20, 21, 33, 34, 29, 20, 21, 33, 34, 29, 20, 21, 33, 34, 29};
+//Float_t SizeMult[] = {2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8};
+// Float_t SizeMultRatio[] = {1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8};
+// Int_t MarkerMult[] = {20, 21, 33, 34, 29, 20, 21, 33, 34, 29, 20, 21, 33, 34, 29};
+Float_t SizeMult[] = {1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8};
+Float_t SizeMultRatio[] = {1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2};
+Int_t MarkerMult[] = {21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21};
 // Float_t ScaleFactor[] = {16384, 8192, 4096, 2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1};
 Float_t ScaleFactor[] = {256, 128, 64, 32, 16, 8, 4, 2, 1};
 Int_t ColorMB = 1;
