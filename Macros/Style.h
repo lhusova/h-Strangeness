@@ -84,7 +84,7 @@ TString namesRegions[3] = {"fHistNear", "fHistAway", "fHistUE"};
 TString namesRegionsShort[3] = {"Near", "Away", "UE"};
 TString paveRegions[3] = {"Near-side", "Away-side", "Underlying event"};
 TString PhiRegions[3] = {"|#Delta#varphi| < #pi/2", "#pi/2 < |#Delta#varphi| < 3/2#pi", "-#pi/2 < |#Delta#varphi| < 3/2#pi"};
-Color_t colRegions[3][3] = {{kRed + 1, kRed - 4, kRed + 2}, {kBlue, kAzure + 7, kBlue + 1}, {kGreen + 2, kGreen + 1, kGreen + 3}};
+Color_t colRegions[3][5] = {{kRed - 7, kRed - 4, kRed + 1, kRed + 2, kRed + 4}, {kAzure + 6, kAzure + 7, kBlue, kBlue + 1, kBlue + 3}, {kSpring + 7, kGreen + 1, kGreen + 2, kGreen + 3, kGreen + 5}};
 Int_t markers[4] = {20, 21, 29, 33};
 Double_t ptTriggBins[] = {2., 4., 6., 10., 50};
 

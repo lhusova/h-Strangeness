@@ -12,17 +12,12 @@ void PlotRegionComparison(Int_t iPart = 0)
     return;
   }
 
-  TFile *file[nMultBins][4];
+  TFile *file[nMultBins][nPtTriggBins];
   TFile *fileSyst;
-  TH1F *fProj[nMultBins][4][3];
-  TH1F *fProjRelSyst[nMultBins][4][3];
-  TH1F *fProjSyst[nMultBins][4][3];
-  TCanvas *can[nMultBins][4][3];
-  TCanvas *canMult[4][3];
-  TPaveText *pave[nMultBins][4][3];
-  TLegend *leg = Plotter::CreateLegend(0.65, 0.95, 0.25, 0.5, 0.05);
-  Double_t yield, erryield, erryieldSist, err;
-
+  TH1F *fProj[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjSyst[nMultBins][nPtTriggBins][nRegions];
+ 
   fileSyst = new TFile("../../Uncertainty.root", "");
   if (!fileSyst)
   {
@@ -34,7 +29,7 @@ void PlotRegionComparison(Int_t iPart = 0)
   {
     for (Int_t iMult = 0; iMult < nMultBins; iMult++)
     {
-      for (Int_t iReg = 0; iReg < 3; iReg++)
+      for (Int_t iReg = 0; iReg < nRegions; iReg++)
       {
         file[iMult][iPtTrigg] = new TFile(Form("../../K0_Yields_Kai/Yields_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root", particleName[iPart].Data(), multiplicityNamesShort[iMult].Data(), iPtTrigg));
         if (!file[iMult][iPtTrigg])
@@ -71,8 +66,8 @@ void PlotRegionComparison(Int_t iPart = 0)
   }
 
   // PLOT: YIELDS VS PT in MULT CLASSES
-  TH1F *fProjScaled[nMultBins][4][3];
-  TH1F *fProjSistScaled[nMultBins][4][3];
+  TH1F *fProjScaled[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjSistScaled[nMultBins][nPtTriggBins][nRegions];
   TH1F *fHistSpectrumStatMultRatio[nMultBins];
   TH1F *fHistSpectrumSistMultRatio[nMultBins];
   TCanvas *canvasPtSpectra;
@@ -130,9 +125,8 @@ void PlotRegionComparison(Int_t iPart = 0)
     gStyle->SetOptStat(0);
     hDummy->Draw("same");
 
-    for (Int_t iReg = 0; iReg < 3; iReg++)
+    for (Int_t iReg = 0; iReg < nRegions; iReg++)
     {
-      // LegendTitle->AddEntry("", Form("%s", paveRegions[iReg].Data()), "");
       if (iReg == 2)
         ScaleFactorMB = pow(2, 10);
       else
@@ -196,7 +190,7 @@ void PlotRegionComparison(Int_t iPart = 0)
     // gPad->SetLogy();
     hDummyRatio->Draw("same");
 
-    for (Int_t iReg = 0; iReg < 3; iReg++)
+    for (Int_t iReg = 0; iReg < nRegions; iReg++)
     {
       Int_t iMultEff = -1;
       for (Int_t iMult = 0; iMult < nMultBins; iMult++)

@@ -12,23 +12,23 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     return;
   }
 
-  TFile *file[numMultBins][4];
+  TFile *file[nMultBins][nPtTriggBins];
   TFile *fileSyst;
-  TH1F *fProj[numMultBins][4][3];
-  TH1F *fProjRelSyst[4][3];
-  TH1F *fProjSyst[numMultBins][4][3];
-  TCanvas *can[numMultBins][4][3];
-  TCanvas *canMult[4][3];
-  TPaveText *pave[numMultBins][4][3];
+  TH1F *fProj[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjSyst[nMultBins][nPtTriggBins][nRegions];
+  TCanvas *can[nMultBins][nPtTriggBins][nRegions];
+  TCanvas *canMult[nPtTriggBins][nRegions];
+  TPaveText *pave[nMultBins][nPtTriggBins][nRegions];
   TLegend *leg = Plotter::CreateLegend(0.65, 0.95, 0.25, 0.5, 0.05);
   Double_t yield, erryield, erryieldSist, err;
 
   // const char *labels[11] = {"90-100%","80-90%","70-80%","60-70%","50-60%","40-50%","30-40%","20-30%","10-20%","0-10%","MB"};
-  const char *labels[numMultBins] = {"70-100%", "50-70%", "40-50%", "30-40%", "20-30%", "10-20%", "1-10%", "0-1%", "MB"};
-  TH1F *histYield[4][3];
-  TH1F *histYieldToMB[4][3];
-  TH1F *histYieldSist[4][3];
-  TH1F *histYieldSistToMB[4][3];
+  const char *labels[nMultBins] = {"70-100%", "50-70%", "40-50%", "30-40%", "20-30%", "10-20%", "1-10%", "0-1%", "MB"};
+  TH1F *histYield[nPtTriggBins][nRegions];
+  TH1F *histYieldToMB[nPtTriggBins][nRegions];
+  TH1F *histYieldSist[nPtTriggBins][nRegions];
+  TH1F *histYieldSistToMB[nPtTriggBins][nRegions];
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     histYield[iPtTrigg][0] = new TH1F(Form("histYieldNear%d", iPtTrigg), "", 9, 0, 9);
@@ -57,7 +57,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   fermiDir->SetParameter(1, 160);
   fermiDir->FixParameter(2, particleMass[iPart]);
 
-  TF1 *levy = new TF1("levy", "[3]*x/([0]*[1])*(([0]-1)*([0]-2))/([0]*[1]+[2]*([0]-2))*TMath::Power(1+(TMath::Sqrt([2]*[2]+x*x)-[2])/([0]*[1]),-[0])", 0, 6);
+  TF1 *levy = new TF1("levy", "[nRegions]*x/([0]*[1])*(([0]-1)*([0]-2))/([0]*[1]+[2]*([0]-2))*TMath::Power(1+(TMath::Sqrt([2]*[2]+x*x)-[2])/([0]*[1]),-[0])", 0, 6);
   levy->SetParameter(0, 7);
   levy->SetParameter(1, 0.8);
   levy->FixParameter(2, particleMass[iPart]);
@@ -76,7 +76,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     return;
   }
 
-  for (Int_t iMult = 0; iMult < numMultBins; iMult++)
+  for (Int_t iMult = 0; iMult < nMultBins; iMult++)
   {
     for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
     {
@@ -165,10 +165,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       // yield+=fermiDir->Integral(0,0.5);
       // yield+=fermiDir->Integral(6,100);
 
-      histYield[iPtTrigg][iReg]->SetBinContent(numMultBins - iMult, yield);
-      histYield[iPtTrigg][iReg]->SetBinError(numMultBins - iMult, erryield);
-      histYieldSist[iPtTrigg][iReg]->SetBinContent(numMultBins - iMult, yield);
-      histYieldSist[iPtTrigg][iReg]->SetBinError(numMultBins - iMult, erryieldSist);
+      histYield[iPtTrigg][iReg]->SetBinContent(nMultBins - iMult, yield);
+      histYield[iPtTrigg][iReg]->SetBinError(nMultBins - iMult, erryield);
+      histYieldSist[iPtTrigg][iReg]->SetBinContent(nMultBins - iMult, yield);
+      histYieldSist[iPtTrigg][iReg]->SetBinError(nMultBins - iMult, erryieldSist);
       histYield[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(iMult + 1, labels[iMult]);
 
       can[iMult][iPtTrigg][iReg]->SaveAs(Form("../../FitPt%s/Ptspectrum_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
@@ -192,7 +192,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   {
     Plotter::SetHist(histYield[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
     Plotter::SetHist(histYieldSist[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
-    // histYield[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.8 * histYield[0][iReg]->GetMinimum(), 1.6 * histYield[3][iReg]->GetMaximum());
+    // histYield[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.8 * histYield[0][iReg]->GetMinimum(), 1.6 * histYield[nRegions][iReg]->GetMaximum());
     if (iReg == 0)
       histYield[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 0.3);
     else if (iReg == 1)
@@ -243,8 +243,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       BinMB = histYield[iPtTrigg][0]->GetNbinsX();
       histYieldToMB[iPtTrigg][iReg]->SetBinContent(b, histYield[iPtTrigg][iReg]->GetBinContent(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB));
       histYieldSistToMB[iPtTrigg][iReg]->SetBinContent(b, histYieldToMB[iPtTrigg][iReg]->GetBinContent(b));
-      Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
-      ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      //Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      //ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      Err =  histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB);
+      ErrSist = histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB);
       histYieldToMB[iPtTrigg][iReg]->SetBinError(b, Err);
       histYieldSistToMB[iPtTrigg][iReg]->SetBinError(b, ErrSist);
     }
@@ -271,17 +273,17 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   canYieldToMB->SaveAs(Form("../../YieldsVsMultToMB_%s_%s.png", particleName[iPart].Data(), paveRegions[iReg].Data()));
 
   // PLOT: YIELDS VS PT in MULT CLASSES
-  TH1F *fProjScaled[numMultBins][4][3];
-  TH1F *fProjSistScaled[numMultBins][4][3];
-  TH1F *fHistSpectrumStatMultRatio[numMultBins];
-  TH1F *fHistSpectrumSistMultRatio[numMultBins];
+  TH1F *fProjScaled[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjSistScaled[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fHistSpectrumStatMultRatio[nMultBins];
+  TH1F *fHistSpectrumSistMultRatio[nMultBins];
   TCanvas *canvasPtSpectra;
   Float_t LLUpperPad = 0.33;
   Float_t ULLowerPad = 0.33;
   TPad *pad1;
   TPad *padL1;
-  TString sScaleFactorFinal[numMultBins];
-  Float_t ScaleFactorFinal[numMultBins];
+  TString sScaleFactorFinal[nMultBins];
+  Float_t ScaleFactorFinal[nMultBins];
 
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
@@ -380,7 +382,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     else
       ScaleFactorMB = pow(2, 8);
 
-    for (Int_t iMult = 0; iMult < numMultBins; iMult++)
+    for (Int_t iMult = 0; iMult < nMultBins; iMult++)
     {
       ScaleFactorFinal[iMult] = ScaleFactor[iMult];
       if (iMult == 0)
@@ -435,7 +437,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     // gPad->SetLogy();
     hDummyRatio->Draw("same");
 
-    for (Int_t iMult = 0; iMult < numMultBins; iMult++)
+    for (Int_t iMult = 0; iMult < nMultBins; iMult++)
     {
       fHistSpectrumStatMultRatio[iMult] = (TH1F *)fProj[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumStatRatio_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
       fHistSpectrumSistMultRatio[iMult] = (TH1F *)fProjSyst[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumSistRatio_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
