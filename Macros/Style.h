@@ -24,6 +24,7 @@
 
 const Int_t nPtTriggBins = 4;
 const Int_t nMultBins = 9;
+const Int_t nRegions = 3;
 
 Float_t LimSupSpectra = 0.99;
 Float_t LimInfSpectra = 0.4 * 1e-5; // 0.4 * 1e-6 for jet
