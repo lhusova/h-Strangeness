@@ -22,6 +22,9 @@
 #include "TFitResult.h"
 #include "TGraphAsymmErrors.h"
 
+const Int_t nPtTriggBins = 4;
+const Int_t nMultBins = 9;
+
 Float_t LimSupSpectra = 0.99;
 Float_t LimInfSpectra = 0.4 * 1e-5; // 0.4 * 1e-6 for jet
 Float_t xTitle = 15;
@@ -37,8 +40,9 @@ Float_t yLabelOffset = 0.01;
 Float_t tickX = 0.025;
 Float_t tickY = 0.03;
 
-Float_t LimSupMultRatio = 2.4; // 1.5 for jet
-Float_t LimInfMultRatio = 0;   // 0.5 for jet
+Float_t LimSupMultRatio = 2.5; // 1.5 for jet
+Float_t UpRangePt[4] = {15, 10, 10, 6};
+Float_t LimInfMultRatio = 0; // 0.5 for jet
 Float_t YoffsetSpectraRatio = 1.1;
 Float_t xTitleR = 35;
 Float_t xOffsetR = 1;
@@ -56,9 +60,9 @@ Float_t tickYRatio = 0.04;
 Int_t ColorFit[] = {634, 797, 815, 429, 867, 601};
 Int_t ColorModel[] = {kBlue + 1, kGreen + 2};
 Int_t ColorMult[] = {634, 628, 807, kOrange - 4, 797, 815, 418, 429, 867, 856, 601, kViolet, kPink + 9, kPink + 1, 1};
-//Float_t SizeMult[] = {2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8};
-// Float_t SizeMultRatio[] = {1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8};
-// Int_t MarkerMult[] = {20, 21, 33, 34, 29, 20, 21, 33, 34, 29, 20, 21, 33, 34, 29};
+// Float_t SizeMult[] = {2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8, 2, 2, 2.8, 2.5, 2.8};
+//  Float_t SizeMultRatio[] = {1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8, 1, 1, 1.8, 1.5, 1.8};
+//  Int_t MarkerMult[] = {20, 21, 33, 34, 29, 20, 21, 33, 34, 29, 20, 21, 33, 34, 29};
 Float_t SizeMult[] = {1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8, 1.8};
 Float_t SizeMultRatio[] = {1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2};
 Int_t MarkerMult[] = {21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21};
@@ -68,6 +72,20 @@ Int_t ColorMB = 1;
 Float_t SizeMB = 2;
 Int_t MarkerMB = 24;
 Float_t ScaleFactorMB = pow(2, 8);
+
+TString particleName[] = {"K0s", "Lam", "Xi", "Omega", "Pion"};
+Float_t particleMass[] = {0.497, 1.115, 1.321, 1.672, 0.1396};
+TString finalNames[] = {"K_{S}^{0}", "(#Lambda+#bar{#Lambda})", "(#Xi^{+}+#Xi^{-})", "(#Omega^{+}+#Omega^{-})", "#pi^{+}+#pi^{-}"};
+TString multiplicityPave[] = {"MB", "0-1%", "1-10%", "10-20%", "20-30%", "30-40%", "40-50%", "50-70%", "70-100%"};
+TString multiplicityNames[] = {"minBias", "0_1Mult", "1_10Mult", "10_20Mult", "20_30Mult", "30_40Mult", "40_50Mult", "50_70Mult", "70_100Mult"};
+TString multiplicityNamesShort[] = {"MB", "0_1Mult", "1_10Mult", "10_20Mult", "20_30Mult", "30_40Mult", "40_50Mult", "50_70Mult", "70_100Mult"};
+TString namesRegions[3] = {"fHistNear", "fHistAway", "fHistUE"};
+TString namesRegionsShort[3] = {"Near", "Away", "UE"};
+TString paveRegions[3] = {"Near-side", "Away-side", "Underlying event"};
+TString PhiRegions[3] = {"|#Delta#varphi| < #pi/2", "#pi/2 < |#Delta#varphi| < 3/2#pi", "-#pi/2 < |#Delta#varphi| < 3/2#pi"};
+Color_t colRegions[3][3] = {{kRed + 1, kRed - 4, kRed + 2}, {kBlue, kAzure + 7, kBlue + 1}, {kGreen + 2, kGreen + 1, kGreen + 3}};
+Int_t markers[4] = {20, 21, 29, 33};
+Double_t ptTriggBins[] = {2., 4., 6., 10., 50};
 
 Int_t Color[] = {634, 628, 797, 815, 418, 429, 867, 601, 1};
 Int_t ColorPt[] = {634, 628, 807, kOrange - 4, 797, 815, 418, 429, 867, 856, 601, kViolet, kPink + 9, kPink + 1, 1};

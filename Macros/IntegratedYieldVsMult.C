@@ -12,41 +12,24 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     return;
   }
 
-  TString particleName[] = {"K0s", "Lam", "Xi", "Omega", "Pion"};
-  Float_t particleMass[] = {0.497, 1.115, 1.321, 1.672, 0.1396};
-  TString finalNames[] = {"K_{S}^{0}", "(#Lambda+#bar{#Lambda})", "(#Xi^{+}+#Xi^{-})", "(#Omega^{+}+#Omega^{-})", "#pi^{+}+#pi^{-}"};
-  // TString multiplicityNames[]={"0_10Mult","10_20Mult","20_30Mult","30_40Mult","40_50Mult","50_60Mult","60_70Mult","70_80Mult","80_90Mult","90_100Mult"};
-  // TString multiplicityPave[]={"0-10%","10-20%","20-30%","30-40%","40-50%","50-60%","60-70%","70-80%","80-90%","90-100%"};
-  TString multiplicityNames[] = {"minBias", "0_1Mult", "1_10Mult", "10_20Mult", "20_30Mult", "30_40Mult", "40_50Mult", "50_70Mult", "70_100Mult"};
-  TString multiplicityNamesShort[] = {"MB", "0_1Mult", "1_10Mult", "10_20Mult", "20_30Mult", "30_40Mult", "40_50Mult", "50_70Mult", "70_100Mult"};
-  TString multiplicityPave[] = {"MB", "0-1%", "1-10%", "10-20%", "20-30%", "30-40%", "40-50%", "50-70%", "70-100%"};
-  TString namesRegions[3] = {"fHistNear", "fHistAway", "fHistUE"};
-  TString namesRegionsShort[3] = {"Near", "Away", "UE"};
-  TString paveRegions[3] = {"Near-side", "Away-side", "Underlying event"};
-  TString PhiRegions[3] = {"|#Delta#varphi| < #pi/2", "#pi/2 < |#Delta#varphi| < 3/2#pi", "-#pi/2 < |#Delta#varphi| < 3/2#pi"};
-  Color_t colRegions[3][5] = {{kRed - 7, kRed - 4, kRed + 1, kRed + 2, kRed + 4}, {kAzure + 6, kAzure + 7, kBlue, kBlue + 1, kBlue + 3}, {kSpring + 7, kGreen + 1, kGreen + 2, kGreen + 3, kGreen + 5}};
-  Int_t markers[4] = {20, 21, 29, 33};
-  Double_t ptTriggBins[] = {2., 4., 6., 10., 50};
-  // Double_t ptTriggBins[] = {0., 1., 2., 3., 100};
-
-  TFile *file[10][4];
+  TFile *file[numMultBins][4];
   TFile *fileSyst;
-  TH1F *fProj[10][4][3];
-  TH1F *fProjRelSyst[10][4][3];
-  TH1F *fProjSyst[10][4][3];
-  TCanvas *can[10][4][3];
+  TH1F *fProj[numMultBins][4][3];
+  TH1F *fProjRelSyst[4][3];
+  TH1F *fProjSyst[numMultBins][4][3];
+  TCanvas *can[numMultBins][4][3];
   TCanvas *canMult[4][3];
-  TPaveText *pave[10][4][3];
+  TPaveText *pave[numMultBins][4][3];
   TLegend *leg = Plotter::CreateLegend(0.65, 0.95, 0.25, 0.5, 0.05);
   Double_t yield, erryield, erryieldSist, err;
 
   // const char *labels[11] = {"90-100%","80-90%","70-80%","60-70%","50-60%","40-50%","30-40%","20-30%","10-20%","0-10%","MB"};
-  const char *labels[9] = {"70-100%", "50-70%", "40-50%", "30-40%", "20-30%", "10-20%", "1-10%", "0-1%", "MB"};
+  const char *labels[numMultBins] = {"70-100%", "50-70%", "40-50%", "30-40%", "20-30%", "10-20%", "1-10%", "0-1%", "MB"};
   TH1F *histYield[4][3];
   TH1F *histYieldToMB[4][3];
   TH1F *histYieldSist[4][3];
   TH1F *histYieldSistToMB[4][3];
-  for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++)
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     histYield[iPtTrigg][0] = new TH1F(Form("histYieldNear%d", iPtTrigg), "", 9, 0, 9);
     histYield[iPtTrigg][1] = new TH1F(Form("histYieldAway%d", iPtTrigg), "", 9, 0, 9);
@@ -86,15 +69,16 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   mT->SetParLimits(1, 0.1, 10);
   mT->FixParameter(2, particleMass[iPart]);
 
-  for (Int_t iMult = 0; iMult < 9; iMult++)
+  fileSyst = new TFile("../../Uncertainty.root", "");
+  if (!fileSyst)
   {
-    fileSyst = new TFile("../../Uncertainty.root", "");
-    if (!fileSyst)
-    {
-      cout << "File not found" << endl;
-      return;
-    }
-    for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++)
+    cout << "File not found" << endl;
+    return;
+  }
+
+  for (Int_t iMult = 0; iMult < numMultBins; iMult++)
+  {
+    for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
     {
       file[iMult][iPtTrigg] = new TFile(Form("../../K0_Yields_Kai/Yields_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root", particleName[iPart].Data(), multiplicityNamesShort[iMult].Data(), iPtTrigg));
       if (!file[iMult][iPtTrigg])
@@ -181,10 +165,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       // yield+=fermiDir->Integral(0,0.5);
       // yield+=fermiDir->Integral(6,100);
 
-      histYield[iPtTrigg][iReg]->SetBinContent(9 - iMult, yield);
-      histYield[iPtTrigg][iReg]->SetBinError(9 - iMult, erryield);
-      histYieldSist[iPtTrigg][iReg]->SetBinContent(9 - iMult, yield);
-      histYieldSist[iPtTrigg][iReg]->SetBinError(9 - iMult, erryieldSist);
+      histYield[iPtTrigg][iReg]->SetBinContent(numMultBins - iMult, yield);
+      histYield[iPtTrigg][iReg]->SetBinError(numMultBins - iMult, erryield);
+      histYieldSist[iPtTrigg][iReg]->SetBinContent(numMultBins - iMult, yield);
+      histYieldSist[iPtTrigg][iReg]->SetBinError(numMultBins - iMult, erryieldSist);
       histYield[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(iMult + 1, labels[iMult]);
 
       can[iMult][iPtTrigg][iReg]->SaveAs(Form("../../FitPt%s/Ptspectrum_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
@@ -204,7 +188,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TLegend *legPtTrigg = Plotter::CreateLegend(0.2, 0.3, 0.7, 0.9, 0.04);
   TCanvas *canYield = Plotter::CreateCanvas(Form("canY"));
 
-  for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++)
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     Plotter::SetHist(histYield[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
     Plotter::SetHist(histYieldSist[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.);
@@ -245,7 +229,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   Int_t BinMB = 0;
   Float_t Err = 0;
   Float_t ErrSist = 0;
-  for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++)
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     histYieldToMB[iPtTrigg][0] = new TH1F(Form("histYieldNearToMB%d", iPtTrigg), "", 8, 0, 8);
     histYieldToMB[iPtTrigg][1] = new TH1F(Form("histYieldAwayToMB%d", iPtTrigg), "", 8, 0, 8);
@@ -287,19 +271,19 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   canYieldToMB->SaveAs(Form("../../YieldsVsMultToMB_%s_%s.png", particleName[iPart].Data(), paveRegions[iReg].Data()));
 
   // PLOT: YIELDS VS PT in MULT CLASSES
-  TH1F *fProjScaled[10][4][3];
-  TH1F *fProjSistScaled[10][4][3];
-  TH1F *fHistSpectrumStatMultRatio[9];
-  TH1F *fHistSpectrumSistMultRatio[9];
+  TH1F *fProjScaled[numMultBins][4][3];
+  TH1F *fProjSistScaled[numMultBins][4][3];
+  TH1F *fHistSpectrumStatMultRatio[numMultBins];
+  TH1F *fHistSpectrumSistMultRatio[numMultBins];
   TCanvas *canvasPtSpectra;
   Float_t LLUpperPad = 0.33;
   Float_t ULLowerPad = 0.33;
   TPad *pad1;
   TPad *padL1;
-  TString sScaleFactorFinal[9];
-  Float_t ScaleFactorFinal[9];
+  TString sScaleFactorFinal[numMultBins];
+  Float_t ScaleFactorFinal[numMultBins];
 
-  for (Int_t iPtTrigg = 0; iPtTrigg < 4; iPtTrigg++)
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     canvasPtSpectra = new TCanvas(Form("canvasPtSpectra_pttrigg%i", iPtTrigg), Form("canvasPtSpectra_pttrigg%i", iPtTrigg), 700, 900);
     pad1 = new TPad("pad1", "pad1", 0, LLUpperPad, 1, 1); // xlow, ylow, xup, yup
@@ -338,7 +322,8 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
         LimInfSpectra = 0.4 * 1e-7;
         LimSupSpectra = 9999.99;
       }
-      else{
+      else
+      {
         LimInfSpectra = 0.4 * 1e-6;
         LimSupSpectra = 9.99;
       }
@@ -395,7 +380,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     else
       ScaleFactorMB = pow(2, 8);
 
-    for (Int_t iMult = 0; iMult < 9; iMult++)
+    for (Int_t iMult = 0; iMult < numMultBins; iMult++)
     {
       ScaleFactorFinal[iMult] = ScaleFactor[iMult];
       if (iMult == 0)
@@ -443,14 +428,14 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     StyleHistoYield(hDummyRatio, LimInfMultRatio, LimSupMultRatio, 1, 1, TitleXPt, TitleYSpectraRatio, "", 1, 1.15, YoffsetSpectraRatio);
     SetHistoTextSize(hDummyRatio, xTitleR, xLabelR, xOffsetR, xLabelOffsetR, yTitleR, yLabelR, yOffsetR, yLabelOffsetR);
     SetTickLength(hDummyRatio, tickXRatio, tickYRatio);
-    hDummyRatio->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]); // 15.5
+    hDummyRatio->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]); 
     canvasPtSpectra->cd();
     padL1->Draw();
     padL1->cd();
     // gPad->SetLogy();
     hDummyRatio->Draw("same");
 
-    for (Int_t iMult = 0; iMult < 9; iMult++)
+    for (Int_t iMult = 0; iMult < numMultBins; iMult++)
     {
       fHistSpectrumStatMultRatio[iMult] = (TH1F *)fProj[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumStatRatio_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
       fHistSpectrumSistMultRatio[iMult] = (TH1F *)fProjSyst[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumSistRatio_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
