@@ -29,6 +29,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TH1F *histYieldToMB[nPtTriggBins][nRegions];
   TH1F *histYieldSist[nPtTriggBins][nRegions];
   TH1F *histYieldSistToMB[nPtTriggBins][nRegions];
+  TH1F *histYieldToMBAllErrors[nPtTriggBins][nRegions];
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     histYield[iPtTrigg][0] = new TH1F(Form("histYieldNear%d", iPtTrigg), "", 9, 0, 9);
@@ -225,10 +226,12 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   canYield->SaveAs(Form("../../YieldsVsMult_%s_%s.png", particleName[iPart].Data(), paveRegions[iReg].Data()));
 
   // RATIOS to MB
+  Int_t ChosenMultYRatio = 0;
   TCanvas *canYieldToMB = Plotter::CreateCanvas(Form("canYToMB"));
   Int_t BinMB = 0;
   Float_t Err = 0;
   Float_t ErrSist = 0;
+  TF1 *pol0[nPtTriggBins];
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     histYieldToMB[iPtTrigg][0] = new TH1F(Form("histYieldNearToMB%d", iPtTrigg), "", 8, 0, 8);
@@ -240,12 +243,13 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     for (Int_t b = 1; b <= histYieldToMB[iPtTrigg][0]->GetNbinsX(); b++)
     {
       histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b - 1]);
-      BinMB = histYield[iPtTrigg][0]->GetNbinsX();
+      if (ChosenMultYRatio==0) BinMB = histYield[iPtTrigg][0]->GetNbinsX();
+      else BinMB = nMultBins - ChosenMultYRatio;
       histYieldToMB[iPtTrigg][iReg]->SetBinContent(b, histYield[iPtTrigg][iReg]->GetBinContent(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB));
       histYieldSistToMB[iPtTrigg][iReg]->SetBinContent(b, histYieldToMB[iPtTrigg][iReg]->GetBinContent(b));
-      //Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
-      //ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
-      Err =  histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB);
+      // Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      // ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      Err = histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB);
       ErrSist = histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB);
       histYieldToMB[iPtTrigg][iReg]->SetBinError(b, Err);
       histYieldSistToMB[iPtTrigg][iReg]->SetBinError(b, ErrSist);
@@ -255,8 +259,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
 
     if (iPtTrigg == 0)
     {
-      Plotter::SetHistAxes(histYieldToMB[iPtTrigg][iReg], "", "Y/Y_{MB}");
+      Plotter::SetHistAxes(histYieldToMB[iPtTrigg][iReg], "", Form("Y/Y_%s", multiplicityPave[ChosenMultYRatio].Data()));
       histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.7, 1.3);
+      //histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.7, 2);
       if (iReg == 2)
         histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 2);
       histYieldToMB[iPtTrigg][iReg]->DrawCopy("ex0");
@@ -265,6 +270,18 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       histYieldToMB[iPtTrigg][iReg]->DrawCopy("same ex0");
     histYieldSistToMB[iPtTrigg][iReg]->SetFillStyle(0);
     histYieldSistToMB[iPtTrigg][iReg]->DrawCopy("same e2");
+
+    histYieldToMBAllErrors[iPtTrigg][iReg] = (TH1F *)histYieldToMB[iPtTrigg][iReg]->Clone(Form("histYieldToMBAllErrors_%i_%i", iPtTrigg, iReg));
+    for (Int_t b = 1; b <= histYieldToMB[iPtTrigg][iReg]->GetNbinsX(); b++)
+    {
+      histYieldToMBAllErrors[iPtTrigg][iReg]->SetBinError(b, sqrt(pow(histYieldToMB[iPtTrigg][iReg]->GetBinError(b), 2) + pow(histYieldSistToMB[iPtTrigg][iReg]->GetBinError(b),2)));
+    }
+    pol0[iPtTrigg] = new TF1(Form("plo0_%i", iPtTrigg), "pol0", 0, 8);
+    pol0[iPtTrigg]->SetLineColor(colRegions[iReg][iPtTrigg]);
+    cout <<"\n\n************" << endl;
+    cout << "Fit of " << iPtTrigg << " pt trigger bin" << endl;
+    histYieldToMBAllErrors[iPtTrigg][iReg]->Fit(pol0[iPtTrigg], "R0");
+    cout << "Chi /NDF "<< pol0[iPtTrigg]->GetChisquare() << "/ " << pol0[iPtTrigg]->GetNDF() << " = " << pol0[iPtTrigg]->GetChisquare() / pol0[iPtTrigg]->GetNDF() << endl;
   }
 
   // paveYields->Draw("same");
@@ -430,7 +447,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     StyleHistoYield(hDummyRatio, LimInfMultRatio, LimSupMultRatio, 1, 1, TitleXPt, TitleYSpectraRatio, "", 1, 1.15, YoffsetSpectraRatio);
     SetHistoTextSize(hDummyRatio, xTitleR, xLabelR, xOffsetR, xLabelOffsetR, yTitleR, yLabelR, yOffsetR, yLabelOffsetR);
     SetTickLength(hDummyRatio, tickXRatio, tickYRatio);
-    hDummyRatio->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]); 
+    hDummyRatio->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]);
     canvasPtSpectra->cd();
     padL1->Draw();
     padL1->cd();

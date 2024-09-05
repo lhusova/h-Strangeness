@@ -17,7 +17,7 @@ void PlotRegionComparison(Int_t iPart = 0)
   TH1F *fProj[nMultBins][nPtTriggBins][nRegions];
   TH1F *fProjRelSyst[nMultBins][nPtTriggBins][nRegions];
   TH1F *fProjSyst[nMultBins][nPtTriggBins][nRegions];
- 
+
   fileSyst = new TFile("../../Uncertainty.root", "");
   if (!fileSyst)
   {
@@ -110,6 +110,27 @@ void PlotRegionComparison(Int_t iPart = 0)
 
     LimSupSpectra = 9999.99;
     LimInfSpectra = 0.4 * 1e-6;
+    LimSupSpectra = 99.99;
+    if (iPtTrigg == 0)
+    {
+      LimInfSpectra = 0.4 * 1e-8;
+      LimSupSpectra = 999.99;
+    }
+    else if (iPtTrigg == 1)
+    {
+      LimInfSpectra = 0.4 * 1e-7;
+      LimSupSpectra = 9999.99;
+    }
+    else if (iPtTrigg == 2)
+    {
+      LimInfSpectra = 0.4 * 1e-7;
+      LimSupSpectra = 9999.99;
+    }
+    else
+    {
+      LimInfSpectra = 0.4 * 1e-6;
+      LimSupSpectra = 999999.99;
+    }
     TH1F *hDummy = new TH1F("hDummy", "hDummy", 10000, 0, 15.5);
     for (Int_t i = 1; i <= hDummy->GetNbinsX(); i++)
       hDummy->SetBinContent(i, 1e-12);
@@ -183,7 +204,7 @@ void PlotRegionComparison(Int_t iPart = 0)
     StyleHistoYield(hDummyRatio, LimInfMultRatio, LimSupMultRatio, 1, 1, TitleXPt, TitleYSpectraRatio, "", 1, 1.15, YoffsetSpectraRatio);
     SetHistoTextSize(hDummyRatio, xTitleR, xLabelR, xOffsetR, xLabelOffsetR, yTitleR, yLabelR, yOffsetR, yLabelOffsetR);
     SetTickLength(hDummyRatio, tickXRatio, tickYRatio);
-    hDummyRatio->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]); 
+    hDummyRatio->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]);
     canvasPtSpectra->cd();
     padL1->Draw();
     padL1->cd();
