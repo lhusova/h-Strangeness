@@ -17,6 +17,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TH1F *fProj[nMultBins][nPtTriggBins][nRegions];
   TH1F *fProjRelSyst[nMultBins][nPtTriggBins][nRegions];
   TH1F *fProjSyst[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst_apass4vsapass6[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst_MCClosure[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst_Final[nMultBins][nPtTriggBins][nRegions];
   TCanvas *can[nMultBins][nPtTriggBins][nRegions];
   TCanvas *canMult[nPtTriggBins][nRegions];
   TPaveText *pave[nMultBins][nPtTriggBins][nRegions];
@@ -95,22 +98,67 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       }
       fProj[iMult][iPtTrigg][iReg]->SetName(Form("fhist_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
       fProjSyst[iMult][iPtTrigg][iReg] = (TH1F *)fProj[iMult][iPtTrigg][iReg]->Clone(Form("fhistSyst_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+
       fProjRelSyst[iMult][iPtTrigg][iReg] = (TH1F *)fileSyst->Get(Form("fhistsyst_%s_%s_pttrigger%d", namesRegionsShort[iReg].Data(), multiplicityNamesShort[0].Data(), iPtTrigg));
+
       if (!fProjRelSyst[iMult][iPtTrigg][iReg])
       {
         cout << "Histogram uncertainty not found" << endl;
         return;
       }
+      fProjRelSyst[iMult][iPtTrigg][iReg]->SetName(Form("fhistRelSyst_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      // adding rel uncertainty associated with apass4 vs apass6
+      fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg] = (TH1F *)fProjRelSyst[iMult][iPtTrigg][iReg]->Clone(Form("fhistRelSyst_apass4vsapass6_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      if (!fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg])
+      {
+        cout << "Histogram uncertainty pass4 vs pass6 not found" << endl;
+        return;
+      }
+      for (Int_t b = 1; b <= fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
+      {
+        if (iMult != 0)
+          fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->SetBinContent(b, 0.02);
+        else
+          fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->SetBinContent(b, 0);
+      }
+
+      // adding rel uncertainty associated with closure test
+      TFile *fileClosure = new TFile(Form("../../ClosureUncer_Trigg%d.root", iPtTrigg));
+      if (!fileClosure)
+      {
+        cout << "File closure test uncertainties not found" << endl;
+        return;
+      }
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg] = (TH1F *)fileClosure->Get(Form("fHistRatio%s", namesRegionsShort[iReg].Data()));
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetName(Form("fhistRelSyst_MCClosure_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      if (!fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg])
+      {
+        cout << "Histogram closure test uncertainty not found" << endl;
+        return;
+      }
+      for (Int_t b = 1; b <= fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
+      {
+        fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetBinContent(b, TMath::Abs(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetBinContent(b)));
+      }
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Smooth();
+
+      // put all uncertainties together
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg] = (TH1F *)fProjRelSyst[iMult][iPtTrigg][iReg]->Clone(Form("fhistRelSyst_Final_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      for (Int_t b = 1; b <= fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
+      {
+        fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetBinContent(b, sqrt(pow(fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetBinContent(b), 2)));
+      }
+
       can[iMult][iPtTrigg][iReg] = Plotter::CreateCanvas(Form("can%i%i%i", iMult, iPtTrigg, iReg));
       if (iReg == 2)
       {
         fProj[iMult][iPtTrigg][iReg]->Scale(50);
         fProjSyst[iMult][iPtTrigg][iReg]->Scale(50);
       }
-      cout << fProj[iMult][iPtTrigg][iReg]->GetNbinsX() << " " << fProjRelSyst[iMult][iPtTrigg][iReg]->GetNbinsX() << endl;
+
       for (Int_t b = 1; b <= fProj[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
       {
-        fProjSyst[iMult][iPtTrigg][iReg]->SetBinError(b, fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b) * fProjSyst[iMult][iPtTrigg][iReg]->GetBinContent(b));
+        fProjSyst[iMult][iPtTrigg][iReg]->SetBinError(b, fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetBinContent(b) * fProjSyst[iMult][iPtTrigg][iReg]->GetBinContent(b));
       }
       // fProj[iMult][iPtTrigg][iReg]->Fit(boltzmann,"mer");
       // fProj[iMult][iPtTrigg][iReg]->Fit(levy,"mer");
@@ -186,6 +234,29 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fProj[iMult][iPtTrigg][iReg]->DrawCopy();
     }
   }
+
+  // PLOT: uncertainties
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
+  {
+    for (Int_t iMult = 0; iMult < nMultBins; iMult++)
+    {
+      if (iMult != 1)
+        continue;
+      TCanvas *canSyst = new TCanvas(Form("canSyst%i%i", iMult, iPtTrigg), Form("canSyst%i%i", iMult, iPtTrigg), 1200, 800);
+      fProjRelSyst[iMult][iPtTrigg][iReg]->SetLineColor(kBlue);
+      fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->SetLineColor(kRed);
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetLineColor(kGreen + 2);
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetLineColor(kBlack);
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 0.5);
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg]->Draw();
+      fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->Draw("same");
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Draw("same hist");
+      fProjRelSyst[iMult][iPtTrigg][iReg]->Draw("same");
+      canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
+      canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.png", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
+    }
+  }
+
   TLegend *legPtTrigg = Plotter::CreateLegend(0.2, 0.3, 0.7, 0.9, 0.04);
   TCanvas *canYield = Plotter::CreateCanvas(Form("canY"));
 
@@ -232,25 +303,31 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TF1 *pol0[nPtTriggBins];
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
-    histYieldToMB[iPtTrigg][0] = new TH1F(Form("histYieldNearToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldToMB[iPtTrigg][1] = new TH1F(Form("histYieldAwayToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldToMB[iPtTrigg][2] = new TH1F(Form("histYieldUEToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldSistToMB[iPtTrigg][0] = new TH1F(Form("histYieldSistNearToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldSistToMB[iPtTrigg][1] = new TH1F(Form("histYieldSistAwayToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldSistToMB[iPtTrigg][2] = new TH1F(Form("histYieldSistUEToMB%d", iPtTrigg), "", 8, 0, 8);
+    // 70-100% not included!
+    histYieldToMB[iPtTrigg][0] = new TH1F(Form("histYieldNearToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldToMB[iPtTrigg][1] = new TH1F(Form("histYieldAwayToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldToMB[iPtTrigg][2] = new TH1F(Form("histYieldUEToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldSistToMB[iPtTrigg][0] = new TH1F(Form("histYieldSistNearToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldSistToMB[iPtTrigg][1] = new TH1F(Form("histYieldSistAwayToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldSistToMB[iPtTrigg][2] = new TH1F(Form("histYieldSistUEToMB%d", iPtTrigg), "", 7, 0, 7);
     for (Int_t b = 1; b <= histYieldToMB[iPtTrigg][0]->GetNbinsX(); b++)
     {
-      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b - 1]);
+      // histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b - 1]);
+      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b]); // skipping 70-100%
       if (ChosenMultYRatio == 0)
         BinMB = histYield[iPtTrigg][0]->GetNbinsX();
       else
+      {
+        return; // not implemented if we skip 70-100%
         BinMB = nMultBins - ChosenMultYRatio;
-      histYieldToMB[iPtTrigg][iReg]->SetBinContent(b, histYield[iPtTrigg][iReg]->GetBinContent(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB));
+      }
+      Int_t Shift = 1; // 0 to start from 70-100%
+      histYieldToMB[iPtTrigg][iReg]->SetBinContent(b, histYield[iPtTrigg][iReg]->GetBinContent(b + Shift) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB));
       histYieldSistToMB[iPtTrigg][iReg]->SetBinContent(b, histYieldToMB[iPtTrigg][iReg]->GetBinContent(b));
-      // Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
-      // ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
-      Err = histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB);
-      ErrSist = histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB);
+      Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b + Shift) / histYield[iPtTrigg][iReg]->GetBinContent(b + Shift), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b + Shift) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b + Shift), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      // Err = histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB);
+      // ErrSist = histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB);
       histYieldToMB[iPtTrigg][iReg]->SetBinError(b, Err);
       histYieldSistToMB[iPtTrigg][iReg]->SetBinError(b, ErrSist);
     }
@@ -460,7 +537,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fHistSpectrumStatMultRatio[iMult]->Divide(fProj[ChosenMult][iPtTrigg][iReg]);
       fHistSpectrumSistMultRatio[iMult]->Divide(fProjSyst[ChosenMult][iPtTrigg][iReg]);
       ErrRatioCorr(fProj[iMult][iPtTrigg][iReg], fProj[ChosenMult][iPtTrigg][iReg], fHistSpectrumStatMultRatio[iMult], 0);
-      //ErrRatioCorr(fProjSyst[iMult][iPtTrigg][iReg], fProjSyst[ChosenMult][iPtTrigg][iReg], fHistSpectrumSistMultRatio[iMult], 0);
+      // ErrRatioCorr(fProjSyst[iMult][iPtTrigg][iReg], fProjSyst[ChosenMult][iPtTrigg][iReg], fHistSpectrumSistMultRatio[iMult], 0);
       fHistSpectrumStatMultRatio[iMult]->GetYaxis()->SetRangeUser(LimInfMultRatio, LimSupMultRatio);
       fHistSpectrumSistMultRatio[iMult]->GetYaxis()->SetRangeUser(LimInfMultRatio, LimSupMultRatio);
       fHistSpectrumStatMultRatio[iMult]->SetMarkerColor(ColorMult[iMult]);
@@ -483,4 +560,21 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     canvasPtSpectra->SaveAs(stringoutpdf + ".png");
     canvasPtSpectra->SaveAs(stringoutpdf + ".eps");
   } // end loop on pttrigg
+
+  TString stringoutroot = Form("YieldsPtIntegrated_%s_%s.root", particleName[iPart].Data(), namesRegions[iReg].Data());
+  TFile *outputFile = new TFile(stringoutroot, "RECREATE");
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
+  {
+    histYieldSist[iPtTrigg][iReg]->Write();
+    histYield[iPtTrigg][iReg]->Write();
+    histYieldSistToMB[iPtTrigg][iReg]->Write();
+    histYieldToMB[iPtTrigg][iReg]->Write();
+    for (Int_t iMult = 0; iMult < nMultBins; iMult++)
+    {
+      fProj[iMult][iPtTrigg][iReg]->Write();
+      fProjSyst[iMult][iPtTrigg][iReg]->Write();
+    }
+  }
+  outputFile->Close();
+  cout << "I have created the output file: " << stringoutroot << endl;
 }
