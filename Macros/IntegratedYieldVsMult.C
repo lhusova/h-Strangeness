@@ -567,7 +567,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     canvasPtSpectra->SaveAs(stringoutpdf + ".eps");
   } // end loop on pttrigg
 
-  TString stringoutroot = Form("YieldsPtIntegrated_%s_%s.root", particleName[iPart].Data(), namesRegions[iReg].Data());
+  TString stringoutroot = Form("../../YieldsPtIntegrated_%s_%s.root", particleName[iPart].Data(), namesRegions[iReg].Data());
   TFile *outputFile = new TFile(stringoutroot, "RECREATE");
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
