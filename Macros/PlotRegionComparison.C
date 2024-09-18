@@ -12,18 +12,9 @@ void PlotRegionComparison(Int_t iPart = 0)
     return;
   }
 
-  TFile *file[nMultBins][nPtTriggBins];
-  TFile *fileSyst;
+  TFile *file[nRegions];
   TH1F *fProj[nMultBins][nPtTriggBins][nRegions];
-  TH1F *fProjRelSyst[nMultBins][nPtTriggBins][nRegions];
   TH1F *fProjSyst[nMultBins][nPtTriggBins][nRegions];
-
-  fileSyst = new TFile("../../Uncertainty.root", "");
-  if (!fileSyst)
-  {
-    cout << "File not found" << endl;
-    return;
-  }
 
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
@@ -31,35 +22,24 @@ void PlotRegionComparison(Int_t iPart = 0)
     {
       for (Int_t iReg = 0; iReg < nRegions; iReg++)
       {
-        file[iMult][iPtTrigg] = new TFile(Form("../../K0_Yields_Kai/Yields_%s_%s_fullrangePeak_11_flat_ptTrigg%d.root", particleName[iPart].Data(), multiplicityNamesShort[iMult].Data(), iPtTrigg));
-        if (!file[iMult][iPtTrigg])
+        TString stringinroot = Form("../../YieldsPtIntegrated_%s_%s.root", particleName[iPart].Data(), namesRegions[iReg].Data());
+        file[iReg] = new TFile(stringinroot, "");
+        if (!file[iReg])
         {
           cout << "File not found" << endl;
           return;
         }
-        fProj[iMult][iPtTrigg][iReg] = (TH1F *)file[iMult][iPtTrigg]->Get(namesRegions[iReg].Data());
+        fProj[iMult][iPtTrigg][iReg] = (TH1F *)file[iReg]->Get(Form("fhist_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
         if (!fProj[iMult][iPtTrigg][iReg])
         {
           cout << "Histogram not found" << endl;
           return;
         }
-
-        fProj[iMult][iPtTrigg][iReg]->SetName(Form("fhist_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
-        fProjSyst[iMult][iPtTrigg][iReg] = (TH1F *)fProj[iMult][iPtTrigg][iReg]->Clone(Form("fhistSyst_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
-        fProjRelSyst[iMult][iPtTrigg][iReg] = (TH1F *)fileSyst->Get(Form("fhistsyst_%s_%s_pttrigger%d", namesRegionsShort[iReg].Data(), multiplicityNamesShort[0].Data(), iPtTrigg));
-        if (!fProjRelSyst[iMult][iPtTrigg][iReg])
+        fProjSyst[iMult][iPtTrigg][iReg] = (TH1F *)file[iReg]->Get(Form("fhistSyst_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+        if (!fProjSyst[iMult][iPtTrigg][iReg])
         {
           cout << "Histogram uncertainty not found" << endl;
           return;
-        }
-        if (iReg == 2)
-        {
-          fProj[iMult][iPtTrigg][iReg]->Scale(50);
-          fProjSyst[iMult][iPtTrigg][iReg]->Scale(50);
-        }
-        for (Int_t b = 1; b <= fProj[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
-        {
-          fProjSyst[iMult][iPtTrigg][iReg]->SetBinError(b, fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b) * fProjSyst[iMult][iPtTrigg][iReg]->GetBinContent(b));
         }
       }
     }
@@ -248,4 +228,62 @@ void PlotRegionComparison(Int_t iPart = 0)
     canvasPtSpectra->SaveAs(stringoutpdf + ".png");
     canvasPtSpectra->SaveAs(stringoutpdf + ".eps");
   } // end loop on pttrigg
+
+  // PLOT: yields vs multiplicity
+  TFile *fileYield[nRegions];
+  TH1F *histYieldToMB[nPtTriggBins][nRegions];
+  TH1F *histYieldSistToMB[nPtTriggBins][nRegions];
+  TString histoName[nRegions] = {"histYieldNearToMB", "histYieldAwayToMB", "histYieldUEToMB"};
+  TString histoNameSist[nRegions] = {"histYieldSistNearToMB", "histYieldSistAwayToMB", "histYieldSistUEToMB"};
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
+  {
+
+    TCanvas *canYield = Plotter::CreateCanvas(Form("canvasPtSpectra_pttrigg%i", iPtTrigg));
+    gPad->SetBottomMargin(0.15);
+    TLegend *legendYield = new TLegend(0.15, 0.5, 0.3, 0.7);
+    legendYield->SetFillStyle(0);
+    legendYield->SetTextAlign(12);
+    legendYield->SetTextSize(0.04);
+
+    for (Int_t iReg = 0; iReg < nRegions; iReg++)
+    {
+      TString stringinroot = Form("../../YieldsPtIntegrated_%s_%s.root", particleName[iPart].Data(), namesRegions[iReg].Data());
+      fileYield[iReg] = new TFile(stringinroot, "");
+      if (!fileYield[iReg])
+      {
+        cout << "File not found" << endl;
+        return;
+      }
+      histYieldToMB[iPtTrigg][iReg] = (TH1F *)fileYield[iReg]->Get(histoName[iReg] + Form("%d", iPtTrigg));
+      histYieldSistToMB[iPtTrigg][iReg] = (TH1F *)fileYield[iReg]->Get(histoNameSist[iReg] + Form("%d", iPtTrigg));
+      if (!histYieldToMB[iPtTrigg][iReg])
+      {
+        cout << "Histogram not found" << endl;
+        return;
+      }
+      Plotter::SetHist(histYieldToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.2, 0., 1., 1.);
+      Plotter::SetHist(histYieldSistToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.2, 0., 1., 1.);
+      histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.4, 2.6);
+      Plotter::SetHistAxes(histYieldToMB[iPtTrigg][iReg], "FT0M Multiplicity Percentile", "Yield ratio to 0#minus100%");
+      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetLabelSize(0.065);
+      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetLabelOffset(0.012);
+      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetTitleOffset(1.3);
+      histYieldToMB[iPtTrigg][iReg]->Draw("same ex0");
+      histYieldToMB[iPtTrigg][iReg]->SetFillStyle(0);
+      histYieldSistToMB[iPtTrigg][iReg]->Draw("same e2");
+      legendYield->AddEntry(histYieldToMB[iPtTrigg][iReg], Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()), "pef");
+    }
+    TLegend *LegendTitle = new TLegend(0.06, 0.72, 0.47, 0.93);
+    LegendTitle->SetFillStyle(0);
+    LegendTitle->SetTextAlign(12);
+    LegendTitle->SetTextSize(0.04);
+    LegendTitle->AddEntry("", "#bf{ALICE Preliminary}", "");
+    LegendTitle->AddEntry("", Form("pp #sqrt{#it{s}} = 13.6 TeV, h#minus%s correlation", finalNames[iPart].Data()), "");
+    LegendTitle->AddEntry("", Form("%.0f < #it{p}_{T}^{trigg} < %.0f GeV/#it{c}, |#it{#eta}^{trigg}| < 0.8, |#it{#eta}^{%s}| < 0.8", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1], finalNames[iPart].Data()), "");
+    // LegendTitle->AddEntry("", Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()), "");
+    LegendTitle->Draw("");
+    legendYield->Draw();
+    canYield->SaveAs(Form("../../YieldsVsMultPrel_%s_%i.pdf", particleName[iPart].Data(), iPtTrigg));
+    canYield->SaveAs(Form("../../YieldsVsMultPrel_%s_%i.png", particleName[iPart].Data(), iPtTrigg));
+  }
 }
