@@ -153,4 +153,20 @@ void ClosureUncertainty()
       legendMult->Draw();
     }
   }
+
+  TFile *fileOut = new TFile("ClosureUncertainty.root", "recreate");
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
+  {
+    for (Int_t iReg = 0; iReg < nRegions; iReg++)
+    {
+      for (Int_t iMult = 0; iMult < nMultBins; iMult++)
+      {
+        if (iMult != 2 && iMult != 6)
+          continue; // keep only 1-10%, 40-50%
+        fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Write();
+      }
+    }
+  }
+  fileOut->Close();
+  cout << "File ClosureUncertainty.root created" << endl;
 }
