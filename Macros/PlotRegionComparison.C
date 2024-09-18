@@ -243,7 +243,7 @@ void PlotRegionComparison(Int_t iPart = 0)
     TLegend *legendYield = new TLegend(0.15, 0.5, 0.3, 0.7);
     legendYield->SetFillStyle(0);
     legendYield->SetTextAlign(12);
-    legendYield->SetTextSize(0.04);
+    legendYield->SetTextSize(0.035);
 
     for (Int_t iReg = 0; iReg < nRegions; iReg++)
     {
@@ -261,8 +261,8 @@ void PlotRegionComparison(Int_t iPart = 0)
         cout << "Histogram not found" << endl;
         return;
       }
-      Plotter::SetHist(histYieldToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.2, 0., 1., 1.);
-      Plotter::SetHist(histYieldSistToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][iPtTrigg], 1.2, 0., 1., 1.);
+      Plotter::SetHist(histYieldToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][2], markerSize[iPtTrigg], 0., 1., 1.);
+      Plotter::SetHist(histYieldSistToMB[iPtTrigg][iReg], "", markers[iPtTrigg], colRegions[iReg][2], markerSize[iPtTrigg], 0., 1., 1.);
       histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.4, 2.6);
       Plotter::SetHistAxes(histYieldToMB[iPtTrigg][iReg], "FT0M Multiplicity Percentile", "Yield ratio to 0#minus100%");
       histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetLabelSize(0.065);
