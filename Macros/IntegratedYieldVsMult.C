@@ -123,30 +123,27 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       }
 
       // adding rel uncertainty associated with closure test
-      TFile *fileClosure = new TFile(Form("../../ClosureUncer_Trigg%d.root", iPtTrigg));
+      TFile *fileClosure = new TFile("ClosureUncertainty.root");
       if (!fileClosure)
       {
         cout << "File closure test uncertainties not found" << endl;
         return;
       }
-      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg] = (TH1F *)fileClosure->Get(Form("fHistRatio%s", namesRegionsShort[iReg].Data()));
-      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetName(Form("fhistRelSyst_MCClosure_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg] = (TH1F *)fileClosure->Get(Form("fhistRelSyst_MCClosure_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[6].Data(), iPtTrigg));
       if (!fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg])
       {
         cout << "Histogram closure test uncertainty not found" << endl;
         return;
       }
-      for (Int_t b = 1; b <= fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
-      {
-        fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetBinContent(b, TMath::Abs(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetBinContent(b)));
-      }
-      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Smooth();
 
       // put all uncertainties together
       fProjRelSyst_Final[iMult][iPtTrigg][iReg] = (TH1F *)fProjRelSyst[iMult][iPtTrigg][iReg]->Clone(Form("fhistRelSyst_Final_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
       for (Int_t b = 1; b <= fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
       {
-        fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetBinContent(b, sqrt(pow(fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetBinContent(b), 2)));
+        if (iMult != 0)
+          fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetBinContent(b, sqrt(pow(fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetBinContent(b), 2)));
+        else
+          fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetBinContent(b, fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b));
       }
 
       can[iMult][iPtTrigg][iReg] = Plotter::CreateCanvas(Form("can%i%i%i", iMult, iPtTrigg, iReg));
@@ -235,7 +232,8 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     }
   }
 
-  // PLOT: uncertainties
+  // PLOT: uncertainties in 0-1%
+  TLegend * legendUnc = Plotter::CreateLegend(0.15, 0.3, 0.65, 0.85, 0.04);
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     for (Int_t iMult = 0; iMult < nMultBins; iMult++)
@@ -252,6 +250,14 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->Draw("same");
       fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Draw("same hist");
       fProjRelSyst[iMult][iPtTrigg][iReg]->Draw("same");
+      if (iPtTrigg == 0)
+      {
+        legendUnc->AddEntry(fProjRelSyst_Final[iMult][iPtTrigg][iReg], "Total", "l");
+        legendUnc->AddEntry(fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg], "apass4 vs apass6", "l");
+        legendUnc->AddEntry(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg], "Closure test", "l");
+        legendUnc->AddEntry(fProjRelSyst[iMult][iPtTrigg][iReg], "Other", "l");
+      }
+      legendUnc->Draw();
       canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
       canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.png", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
     }
@@ -576,5 +582,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     }
   }
   outputFile->Close();
-  cout << "I have created the output file: " << stringoutroot << endl;
+  cout << "\nI have created the output file: " << stringoutroot << endl;
+
+  cout << "\n\n\e[35mWARNING: Uncertainty on closure test taken from mult 40-50\% for all multiplicity classes! Hardcoded in macro\n\n " << endl;
 }
