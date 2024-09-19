@@ -146,9 +146,9 @@ void ClosureUncertainty()
         fProjRelSyst_MCClosureMB_Old[iPtTrigg][iReg]->GetXaxis()->SetLabelSize(0.05);
         fProjRelSyst_MCClosureMB_Old[iPtTrigg][iReg]->GetYaxis()->SetLabelSize(0.05);
         fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetLineColor(ColorMult[iMult]);
-        fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 0.5);
+        fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 0.3);
         fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Draw("hist same");
-        fProjRelSyst_MCClosureMB_Old[iPtTrigg][iReg]->Draw("same hist");
+        //fProjRelSyst_MCClosureMB_Old[iPtTrigg][iReg]->Draw("same hist");
       }
       legendMult->Draw();
     }
