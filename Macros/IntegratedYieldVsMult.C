@@ -17,6 +17,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TH1F *fProj[nMultBins][nPtTriggBins][nRegions];
   TH1F *fProjRelSyst[nMultBins][nPtTriggBins][nRegions];
   TH1F *fProjSyst[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst_apass4vsapass6[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst_MCClosure[nMultBins][nPtTriggBins][nRegions];
+  TH1F *fProjRelSyst_Final[nMultBins][nPtTriggBins][nRegions];
   TCanvas *can[nMultBins][nPtTriggBins][nRegions];
   TCanvas *canMult[nPtTriggBins][nRegions];
   TPaveText *pave[nMultBins][nPtTriggBins][nRegions];
@@ -24,7 +27,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   Double_t yield, erryield, erryieldSist, err;
 
   // const char *labels[11] = {"90-100%","80-90%","70-80%","60-70%","50-60%","40-50%","30-40%","20-30%","10-20%","0-10%","MB"};
-  const char *labels[nMultBins] = {"70-100%", "50-70%", "40-50%", "30-40%", "20-30%", "10-20%", "1-10%", "0-1%", "MB"};
+  const char *labels[nMultBins] = {"70#minus100%", "50#minus70%", "40#minus50%", "30#minus40%", "20#minus30%", "10#minus20%", "1#minus10%", "0#minus1%", "0#minus100%"};
   TH1F *histYield[nPtTriggBins][nRegions];
   TH1F *histYieldToMB[nPtTriggBins][nRegions];
   TH1F *histYieldSist[nPtTriggBins][nRegions];
@@ -95,22 +98,64 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       }
       fProj[iMult][iPtTrigg][iReg]->SetName(Form("fhist_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
       fProjSyst[iMult][iPtTrigg][iReg] = (TH1F *)fProj[iMult][iPtTrigg][iReg]->Clone(Form("fhistSyst_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+
       fProjRelSyst[iMult][iPtTrigg][iReg] = (TH1F *)fileSyst->Get(Form("fhistsyst_%s_%s_pttrigger%d", namesRegionsShort[iReg].Data(), multiplicityNamesShort[0].Data(), iPtTrigg));
+
       if (!fProjRelSyst[iMult][iPtTrigg][iReg])
       {
         cout << "Histogram uncertainty not found" << endl;
         return;
       }
+      fProjRelSyst[iMult][iPtTrigg][iReg]->SetName(Form("fhistRelSyst_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      // adding rel uncertainty associated with apass4 vs apass6
+      fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg] = (TH1F *)fProjRelSyst[iMult][iPtTrigg][iReg]->Clone(Form("fhistRelSyst_apass4vsapass6_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      if (!fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg])
+      {
+        cout << "Histogram uncertainty pass4 vs pass6 not found" << endl;
+        return;
+      }
+      for (Int_t b = 1; b <= fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
+      {
+        if (iMult != 0)
+          fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->SetBinContent(b, 0.02);
+        else
+          fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->SetBinContent(b, 0);
+      }
+
+      // adding rel uncertainty associated with closure test
+      TFile *fileClosure = new TFile("ClosureUncertainty.root");
+      if (!fileClosure)
+      {
+        cout << "File closure test uncertainties not found" << endl;
+        return;
+      }
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg] = (TH1F *)fileClosure->Get(Form("fhistRelSyst_MCClosure_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[6].Data(), iPtTrigg));
+      if (!fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg])
+      {
+        cout << "Histogram closure test uncertainty not found" << endl;
+        return;
+      }
+
+      // put all uncertainties together
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg] = (TH1F *)fProjRelSyst[iMult][iPtTrigg][iReg]->Clone(Form("fhistRelSyst_Final_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
+      for (Int_t b = 1; b <= fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
+      {
+        if (iMult != 0)
+          fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetBinContent(b, sqrt(pow(fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->GetBinContent(b), 2) + pow(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetBinContent(b), 2)));
+        else
+          fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetBinContent(b, fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b));
+      }
+
       can[iMult][iPtTrigg][iReg] = Plotter::CreateCanvas(Form("can%i%i%i", iMult, iPtTrigg, iReg));
       if (iReg == 2)
       {
         fProj[iMult][iPtTrigg][iReg]->Scale(50);
         fProjSyst[iMult][iPtTrigg][iReg]->Scale(50);
       }
-      cout << fProj[iMult][iPtTrigg][iReg]->GetNbinsX() << " " << fProjRelSyst[iMult][iPtTrigg][iReg]->GetNbinsX() << endl;
+
       for (Int_t b = 1; b <= fProj[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
       {
-        fProjSyst[iMult][iPtTrigg][iReg]->SetBinError(b, fProjRelSyst[iMult][iPtTrigg][iReg]->GetBinContent(b) * fProjSyst[iMult][iPtTrigg][iReg]->GetBinContent(b));
+        fProjSyst[iMult][iPtTrigg][iReg]->SetBinError(b, fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetBinContent(b) * fProjSyst[iMult][iPtTrigg][iReg]->GetBinContent(b));
       }
       // fProj[iMult][iPtTrigg][iReg]->Fit(boltzmann,"mer");
       // fProj[iMult][iPtTrigg][iReg]->Fit(levy,"mer");
@@ -138,10 +183,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
 
       pave[iMult][iPtTrigg][iReg] = new TPaveText();
       Plotter::SetPaveText(pave[iMult][iPtTrigg][iReg], 42, 0.05, 0, 0, 33, 0, 0.55, 0.97, 0.6, 0.95);
-      pave[iMult][iPtTrigg][iReg]->AddText("ALICE, Work in Progress");
+      pave[iMult][iPtTrigg][iReg]->AddText("ALICE, Preliminary");
       pave[iMult][iPtTrigg][iReg]->AddText("pp, 13.6 TeV");
       pave[iMult][iPtTrigg][iReg]->AddText(Form("%s", multiplicityPave[iMult].Data()));
-      pave[iMult][iPtTrigg][iReg]->AddText(Form("h-%s", finalNames[iPart].Data()));
+      pave[iMult][iPtTrigg][iReg]->AddText(Form("h#minus%s correlation", finalNames[iPart].Data()));
       pave[iMult][iPtTrigg][iReg]->AddText(Form("%g < #font[52]{p}^{trigg}_{T} < %g GeV/#font[52]{c}", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1]));
       pave[iMult][iPtTrigg][iReg]->AddText("|#Delta#eta| < 1");
       pave[iMult][iPtTrigg][iReg]->AddText(paveRegions[iReg].Data());
@@ -186,6 +231,38 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fProj[iMult][iPtTrigg][iReg]->DrawCopy();
     }
   }
+
+  // PLOT: uncertainties in 0-1%
+  TLegend * legendUnc = Plotter::CreateLegend(0.15, 0.3, 0.65, 0.85, 0.04);
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
+  {
+    for (Int_t iMult = 0; iMult < nMultBins; iMult++)
+    {
+      if (iMult != 1)
+        continue;
+      TCanvas *canSyst = new TCanvas(Form("canSyst%i%i", iMult, iPtTrigg), Form("canSyst%i%i", iMult, iPtTrigg), 1200, 800);
+      fProjRelSyst[iMult][iPtTrigg][iReg]->SetLineColor(kBlue);
+      fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->SetLineColor(kRed);
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetLineColor(kGreen + 2);
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetLineColor(kBlack);
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 0.5);
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg]->Draw();
+      fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->Draw("same");
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Draw("same hist");
+      fProjRelSyst[iMult][iPtTrigg][iReg]->Draw("same");
+      if (iPtTrigg == 0)
+      {
+        legendUnc->AddEntry(fProjRelSyst_Final[iMult][iPtTrigg][iReg], "Total", "l");
+        legendUnc->AddEntry(fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg], "apass4 vs apass6", "l");
+        legendUnc->AddEntry(fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg], "Closure test", "l");
+        legendUnc->AddEntry(fProjRelSyst[iMult][iPtTrigg][iReg], "Other", "l");
+      }
+      legendUnc->Draw();
+      canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
+      canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.png", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
+    }
+  }
+
   TLegend *legPtTrigg = Plotter::CreateLegend(0.2, 0.3, 0.7, 0.9, 0.04);
   TCanvas *canYield = Plotter::CreateCanvas(Form("canY"));
 
@@ -214,12 +291,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
 
   TPaveText *paveYields = new TPaveText();
   Plotter::SetPaveText(paveYields, 42, 0.04, 0, 0, 33, 0, 0.7, 0.95, 0.6, 0.90);
-  paveYields->AddText("ALICE, Work in Progress");
+  paveYields->AddText("ALICE, Preliminary");
   paveYields->AddText("pp, 13.6 TeV");
-  // paveYields->AddText(Form("h-%s, |#Delta#it{#eta}| < 1.1", finalNames[iPart].Data()));
-  paveYields->AddText(Form("h-%s, |#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data(), finalNames[iPart].Data()));
+  paveYields->AddText(Form("h#minus%s correlation, |#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data(), finalNames[iPart].Data()));
   paveYields->AddText(Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()));
-  // paveYields->AddText(Form("|#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data()));
   paveYields->Draw("same");
   legPtTrigg->Draw();
   canYield->SaveAs(Form("../../YieldsVsMult_%s_%s.pdf", particleName[iPart].Data(), paveRegions[iReg].Data()));
@@ -234,23 +309,31 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TF1 *pol0[nPtTriggBins];
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
-    histYieldToMB[iPtTrigg][0] = new TH1F(Form("histYieldNearToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldToMB[iPtTrigg][1] = new TH1F(Form("histYieldAwayToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldToMB[iPtTrigg][2] = new TH1F(Form("histYieldUEToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldSistToMB[iPtTrigg][0] = new TH1F(Form("histYieldSistNearToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldSistToMB[iPtTrigg][1] = new TH1F(Form("histYieldSistAwayToMB%d", iPtTrigg), "", 8, 0, 8);
-    histYieldSistToMB[iPtTrigg][2] = new TH1F(Form("histYieldSistUEToMB%d", iPtTrigg), "", 8, 0, 8);
+    // 70-100% not included!
+    histYieldToMB[iPtTrigg][0] = new TH1F(Form("histYieldNearToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldToMB[iPtTrigg][1] = new TH1F(Form("histYieldAwayToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldToMB[iPtTrigg][2] = new TH1F(Form("histYieldUEToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldSistToMB[iPtTrigg][0] = new TH1F(Form("histYieldSistNearToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldSistToMB[iPtTrigg][1] = new TH1F(Form("histYieldSistAwayToMB%d", iPtTrigg), "", 7, 0, 7);
+    histYieldSistToMB[iPtTrigg][2] = new TH1F(Form("histYieldSistUEToMB%d", iPtTrigg), "", 7, 0, 7);
     for (Int_t b = 1; b <= histYieldToMB[iPtTrigg][0]->GetNbinsX(); b++)
     {
-      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b - 1]);
-      if (ChosenMultYRatio==0) BinMB = histYield[iPtTrigg][0]->GetNbinsX();
-      else BinMB = nMultBins - ChosenMultYRatio;
-      histYieldToMB[iPtTrigg][iReg]->SetBinContent(b, histYield[iPtTrigg][iReg]->GetBinContent(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB));
+      // histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b - 1]);
+      histYieldToMB[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(b, labels[b]); // skipping 70-100%
+      if (ChosenMultYRatio == 0)
+        BinMB = histYield[iPtTrigg][0]->GetNbinsX();
+      else
+      {
+        return; // not implemented if we skip 70-100%
+        BinMB = nMultBins - ChosenMultYRatio;
+      }
+      Int_t Shift = 1; // 0 to start from 70-100%
+      histYieldToMB[iPtTrigg][iReg]->SetBinContent(b, histYield[iPtTrigg][iReg]->GetBinContent(b + Shift) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB));
       histYieldSistToMB[iPtTrigg][iReg]->SetBinContent(b, histYieldToMB[iPtTrigg][iReg]->GetBinContent(b));
-      // Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
-      // ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
-      Err = histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB);
-      ErrSist = histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB);
+      Err = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYield[iPtTrigg][iReg]->GetBinError(b + Shift) / histYield[iPtTrigg][iReg]->GetBinContent(b + Shift), 2) + pow(histYield[iPtTrigg][iReg]->GetBinError(BinMB) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      ErrSist = histYieldToMB[iPtTrigg][iReg]->GetBinContent(b) * sqrt(pow(histYieldSist[iPtTrigg][iReg]->GetBinError(b + Shift) / histYieldSist[iPtTrigg][iReg]->GetBinContent(b + Shift), 2) + pow(histYieldSist[iPtTrigg][iReg]->GetBinError(BinMB) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB), 2));
+      // Err = histYield[iPtTrigg][iReg]->GetBinError(b) / histYield[iPtTrigg][iReg]->GetBinContent(BinMB);
+      // ErrSist = histYieldSist[iPtTrigg][iReg]->GetBinError(b) / histYieldSist[iPtTrigg][iReg]->GetBinContent(BinMB);
       histYieldToMB[iPtTrigg][iReg]->SetBinError(b, Err);
       histYieldSistToMB[iPtTrigg][iReg]->SetBinError(b, ErrSist);
     }
@@ -261,7 +344,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     {
       Plotter::SetHistAxes(histYieldToMB[iPtTrigg][iReg], "", Form("Y/Y_%s", multiplicityPave[ChosenMultYRatio].Data()));
       histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.7, 1.3);
-      //histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.7, 2);
+      // histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0.7, 2);
       if (iReg == 2)
         histYieldToMB[iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 2);
       histYieldToMB[iPtTrigg][iReg]->DrawCopy("ex0");
@@ -274,14 +357,14 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     histYieldToMBAllErrors[iPtTrigg][iReg] = (TH1F *)histYieldToMB[iPtTrigg][iReg]->Clone(Form("histYieldToMBAllErrors_%i_%i", iPtTrigg, iReg));
     for (Int_t b = 1; b <= histYieldToMB[iPtTrigg][iReg]->GetNbinsX(); b++)
     {
-      histYieldToMBAllErrors[iPtTrigg][iReg]->SetBinError(b, sqrt(pow(histYieldToMB[iPtTrigg][iReg]->GetBinError(b), 2) + pow(histYieldSistToMB[iPtTrigg][iReg]->GetBinError(b),2)));
+      histYieldToMBAllErrors[iPtTrigg][iReg]->SetBinError(b, sqrt(pow(histYieldToMB[iPtTrigg][iReg]->GetBinError(b), 2) + pow(histYieldSistToMB[iPtTrigg][iReg]->GetBinError(b), 2)));
     }
     pol0[iPtTrigg] = new TF1(Form("plo0_%i", iPtTrigg), "pol0", 0, 8);
     pol0[iPtTrigg]->SetLineColor(colRegions[iReg][iPtTrigg]);
-    cout <<"\n\n************" << endl;
+    cout << "\n\n************" << endl;
     cout << "Fit of " << iPtTrigg << " pt trigger bin" << endl;
     histYieldToMBAllErrors[iPtTrigg][iReg]->Fit(pol0[iPtTrigg], "R0");
-    cout << "Chi /NDF "<< pol0[iPtTrigg]->GetChisquare() << "/ " << pol0[iPtTrigg]->GetNDF() << " = " << pol0[iPtTrigg]->GetChisquare() / pol0[iPtTrigg]->GetNDF() << endl;
+    cout << "Chi /NDF " << pol0[iPtTrigg]->GetChisquare() << "/ " << pol0[iPtTrigg]->GetNDF() << " = " << pol0[iPtTrigg]->GetChisquare() / pol0[iPtTrigg]->GetNDF() << endl;
   }
 
   // paveYields->Draw("same");
@@ -325,79 +408,73 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     LegendTitle->SetFillStyle(0);
     LegendTitle->SetTextAlign(33);
     LegendTitle->SetTextSize(0.04);
-    LegendTitle->AddEntry("", "#bf{ALICE Work in progress}", "");
-    LegendTitle->AddEntry("", "Run 3, pp #sqrt{#it{s}} = 13.6 TeV", "");
-    LegendTitle->AddEntry("", Form("h-%s, %.1f < #it{p}_{T, trigg} < %.1f GeV/#it{c}", finalNames[iPart].Data(), ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1]), "");
-    // LegendTitle->AddEntry("", Form("%.1f < p_{T, trigg} < %.1f", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1]), "");
-    LegendTitle->AddEntry("", Form("|#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data()), "");
-    // LegendTitle->AddEntry("", "|#Delta#it{#eta}| < 1.1", "");
-    LegendTitle->AddEntry("", Form("%s", paveRegions[iReg].Data()), "");
+    LegendTitle->AddEntry("", "#bf{ALICE Preliminary}", "");
+    // option 1
+    // LegendTitle->AddEntry("", "Run 3, pp #sqrt{#it{s}} = 13.6 TeV", "");
+    // LegendTitle->AddEntry("", Form("h#minus%s correlation, %.0f < #it{p}_{T}^{trigg} < %.0f GeV/#it{c}", finalNames[iPart].Data(), ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1]), "");
+    // LegendTitle->AddEntry("", Form("|#it{#eta}^{trigg}| < 0.8, |#it{#eta}^{%s}| < 0.8", finalNames[iPart].Data()), "");
+    // LegendTitle->AddEntry("", Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()));
+    // option 2
+    LegendTitle->AddEntry("", Form("pp #sqrt{#it{s}} = 13.6 TeV, h#minus%s correlation", finalNames[iPart].Data()), "");
+    LegendTitle->AddEntry("", Form("%.0f < #it{p}_{T}^{trigg} < %.0f GeV/#it{c}, |#it{#eta}^{trigg}| < 0.8, |#it{#eta}^{%s}| < 0.8", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1], finalNames[iPart].Data()), "");
+    LegendTitle->AddEntry("", Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()), "");
 
-    LimSupSpectra = 99.99;
+    // LimSupSpectra = 9999;
+    LimSupSpectra = 30000;
     if (iPtTrigg == 0)
     {
       if (iReg == 2)
       {
         LimInfSpectra = 0.4 * 1e-7;
-        LimSupSpectra = 9999.99;
+        LimSupSpectra = 99999.99;
       }
       else
-      {
-        LimInfSpectra = 0.4 * 1e-6;
-        LimSupSpectra = 9.99;
-      }
+        LimInfSpectra = 0.2 * 1e-5; // 0.4 * 1e-6 if not prob. density
     }
     else if (iPtTrigg == 1)
     {
       if (iReg == 2)
       {
-        LimInfSpectra = 0.4 * 1e-5;
-        LimSupSpectra = 9999.99;
+        LimInfSpectra = 0.4 * 1e-6;
+        LimSupSpectra = 999999;
       }
       else
-        LimInfSpectra = 0.4 * 1e-5;
+        LimInfSpectra = 0.4 * 1e-4; // 0.4 * 1e-5 if not prob. density
     }
     else if (iPtTrigg == 2)
     {
       if (iReg == 2)
       {
-        LimInfSpectra = 0.4 * 1e-5;
-        LimSupSpectra = 9999.99;
+        LimInfSpectra = 0.4 * 1e-6;
+        LimSupSpectra = 999999;
       }
       else
-        LimInfSpectra = 0.4 * 1e-5;
+        LimInfSpectra = 0.4 * 1e-4; // 0.4 * 1e-5 if not prob. density
     }
     else
     {
       if (iReg == 2)
       {
         LimInfSpectra = 0.4 * 1e-5;
-        LimSupSpectra = 99999.99;
+        LimSupSpectra = 999999;
       }
       else
-      {
-        LimInfSpectra = 0.4 * 1e-4;
-        LimSupSpectra = 999.99;
-      }
+        LimInfSpectra = 0.4 * 1e-3; // 0.4 * 1e-4 if not prob. density
     }
-    TH1F *hDummy = new TH1F("hDummy", "hDummy", 10000, 0, 15.5);
+    TH1F *hDummy = new TH1F("hDummy", "hDummy", 10000, 0, UpRangePt[iPtTrigg] + OffsetX[iPtTrigg]);
     for (Int_t i = 1; i <= hDummy->GetNbinsX(); i++)
       hDummy->SetBinContent(i, 1e-12);
     canvasPtSpectra->cd();
     SetFont(hDummy);
-    StyleHistoYield(hDummy, LimInfSpectra, LimSupSpectra, 1, 1, TitleXPt, TitleYYield, "", 1, 1.15, 1.6);
+    StyleHistoYield(hDummy, LimInfSpectra, LimSupSpectra, 1, 1, TitleXPt, TitleYProbDensity, "", 1, 1.15, 1.6);
     SetHistoTextSize(hDummy, xTitle, xLabel, xOffset, xLabelOffset, yTitle, yLabel, yOffset, yLabelOffset);
     SetTickLength(hDummy, tickX, tickY);
-    hDummy->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]);
     pad1->Draw();
     pad1->cd();
     gPad->SetLogy();
     gStyle->SetOptStat(0);
     hDummy->Draw("same");
-    if (iReg == 2)
-      ScaleFactorMB = pow(2, 10);
-    else
-      ScaleFactorMB = pow(2, 8);
+    ScaleFactorMB = pow(2, 8); // 10 if not prob. density
 
     for (Int_t iMult = 0; iMult < nMultBins; iMult++)
     {
@@ -413,6 +490,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fProjSistScaled[iMult][iPtTrigg][iReg] = (TH1F *)fProjSyst[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumSistScaled_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
       fProjScaled[iMult][iPtTrigg][iReg]->Scale(ScaleFactorFinal[iMult]);
       fProjSistScaled[iMult][iPtTrigg][iReg]->Scale(ScaleFactorFinal[iMult]);
+      Float_t ProbDensityScaleFactor = histYield[iPtTrigg][iReg]->GetBinContent(nMultBins); // 0-100% integrated yields
+      fProjScaled[iMult][iPtTrigg][iReg]->Scale(1. / ProbDensityScaleFactor);
+      fProjSistScaled[iMult][iPtTrigg][iReg]->Scale(1. / ProbDensityScaleFactor);
       for (Int_t b = 1; b <= fProj[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
       {
         // cout << "bin " << b << " " << fProj[iMult][iPtTrigg][iReg]->GetBinContent(b) << "+-" << fProj[iMult][iPtTrigg][iReg]->GetBinError(b) << endl;
@@ -427,31 +507,33 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fProjSistScaled[iMult][iPtTrigg][iReg]->SetLineColor(ColorMult[iMult]);
       fProjSistScaled[iMult][iPtTrigg][iReg]->SetMarkerStyle(MarkerMult[iMult]);
       fProjSistScaled[iMult][iPtTrigg][iReg]->SetMarkerSize(SizeMult[iMult]);
-      fProjScaled[iMult][iPtTrigg][iReg]->Draw("same ex0");
-      fProjSistScaled[iMult][iPtTrigg][iReg]->SetFillStyle(0);
-      fProjSistScaled[iMult][iPtTrigg][iReg]->Draw("same e2");
       sScaleFactorFinal[iMult] = Form(" (x2^{%i})", int(log2(ScaleFactorFinal[iMult])));
       if (ScaleFactorFinal[iMult] == 1)
         sScaleFactorFinal[iMult] = "";
       else if (ScaleFactorFinal[iMult] == 2)
         sScaleFactorFinal[iMult] = " (x2)";
-      legendAllMult->AddEntry(fProjScaled[iMult][iPtTrigg][iReg], Form("%s", multiplicityPave[iMult].Data()) + sScaleFactorFinal[iMult] + " ", "pef");
+      if (iMult != (nMultBins - 1))
+      {
+        fProjScaled[iMult][iPtTrigg][iReg]->Draw("same ex0");
+        fProjSistScaled[iMult][iPtTrigg][iReg]->SetFillStyle(0);
+        fProjSistScaled[iMult][iPtTrigg][iReg]->Draw("same e2");
+        legendAllMult->AddEntry(fProjScaled[iMult][iPtTrigg][iReg], Form("%s", multiplicityPave[iMult].Data()) + sScaleFactorFinal[iMult] + " ", "pef");
+      }
     } // end loop on mult
     LegendTitle->Draw("");
     legendAllMult->Draw("");
 
     Int_t ChosenMult = 0; // MB
     TString TitleYSpectraRatio = Form("Ratio to %s", multiplicityPave[ChosenMult].Data());
-    TH1F *hDummyRatio = new TH1F("hDummyRatio", "hDummyRatio", 10000, 0, 15.5);
+    TH1F *hDummyRatio = new TH1F("hDummyRatio", "hDummyRatio", 10000, 0, UpRangePt[iPtTrigg] + OffsetX[iPtTrigg]);
     SetFont(hDummyRatio);
     StyleHistoYield(hDummyRatio, LimInfMultRatio, LimSupMultRatio, 1, 1, TitleXPt, TitleYSpectraRatio, "", 1, 1.15, YoffsetSpectraRatio);
     SetHistoTextSize(hDummyRatio, xTitleR, xLabelR, xOffsetR, xLabelOffsetR, yTitleR, yLabelR, yOffsetR, yLabelOffsetR);
     SetTickLength(hDummyRatio, tickXRatio, tickYRatio);
-    hDummyRatio->GetXaxis()->SetRangeUser(0, UpRangePt[iPtTrigg]);
     canvasPtSpectra->cd();
     padL1->Draw();
     padL1->cd();
-    // gPad->SetLogy();
+    gPad->SetLogy();
     hDummyRatio->Draw("same");
 
     for (Int_t iMult = 0; iMult < nMultBins; iMult++)
@@ -461,7 +543,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fHistSpectrumStatMultRatio[iMult]->Divide(fProj[ChosenMult][iPtTrigg][iReg]);
       fHistSpectrumSistMultRatio[iMult]->Divide(fProjSyst[ChosenMult][iPtTrigg][iReg]);
       ErrRatioCorr(fProj[iMult][iPtTrigg][iReg], fProj[ChosenMult][iPtTrigg][iReg], fHistSpectrumStatMultRatio[iMult], 0);
-      ErrRatioCorr(fProjSyst[iMult][iPtTrigg][iReg], fProjSyst[ChosenMult][iPtTrigg][iReg], fHistSpectrumSistMultRatio[iMult], 0);
+      // ErrRatioCorr(fProjSyst[iMult][iPtTrigg][iReg], fProjSyst[ChosenMult][iPtTrigg][iReg], fHistSpectrumSistMultRatio[iMult], 0);
       fHistSpectrumStatMultRatio[iMult]->GetYaxis()->SetRangeUser(LimInfMultRatio, LimSupMultRatio);
       fHistSpectrumSistMultRatio[iMult]->GetYaxis()->SetRangeUser(LimInfMultRatio, LimSupMultRatio);
       fHistSpectrumStatMultRatio[iMult]->SetMarkerColor(ColorMult[iMult]);
@@ -472,7 +554,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fHistSpectrumSistMultRatio[iMult]->SetLineColor(ColorMult[iMult]);
       fHistSpectrumSistMultRatio[iMult]->SetMarkerStyle(MarkerMult[iMult]);
       fHistSpectrumSistMultRatio[iMult]->SetMarkerSize(SizeMultRatio[iMult]);
-      if (iMult != ChosenMult)
+      if (iMult != ChosenMult && iMult != (nMultBins - 1)) // do not plot 0-100% and 70-100%
       {
         fHistSpectrumStatMultRatio[iMult]->Draw("same ex0");
         fHistSpectrumSistMultRatio[iMult]->SetFillStyle(0);
@@ -484,4 +566,23 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     canvasPtSpectra->SaveAs(stringoutpdf + ".png");
     canvasPtSpectra->SaveAs(stringoutpdf + ".eps");
   } // end loop on pttrigg
+
+  TString stringoutroot = Form("../../YieldsPtIntegrated_%s_%s.root", particleName[iPart].Data(), namesRegions[iReg].Data());
+  TFile *outputFile = new TFile(stringoutroot, "RECREATE");
+  for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
+  {
+    histYieldSist[iPtTrigg][iReg]->Write();
+    histYield[iPtTrigg][iReg]->Write();
+    histYieldSistToMB[iPtTrigg][iReg]->Write();
+    histYieldToMB[iPtTrigg][iReg]->Write();
+    for (Int_t iMult = 0; iMult < nMultBins; iMult++)
+    {
+      fProj[iMult][iPtTrigg][iReg]->Write();
+      fProjSyst[iMult][iPtTrigg][iReg]->Write();
+    }
+  }
+  outputFile->Close();
+  cout << "\nI have created the output file: " << stringoutroot << endl;
+
+  cout << "\n\n\e[35mWARNING: Uncertainty on closure test taken from mult 40-50\% for all multiplicity classes! Hardcoded in macro\n\n " << endl;
 }
