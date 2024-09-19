@@ -24,7 +24,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   TCanvas *canMult[nPtTriggBins][nRegions];
   TPaveText *pave[nMultBins][nPtTriggBins][nRegions];
   TLegend *leg = Plotter::CreateLegend(0.65, 0.95, 0.25, 0.5, 0.05);
-  Double_t yield, erryield, erryieldSist, err;
+  Double_t yield[nPtTriggBins][nMultBins] = {0};
+  Double_t erryield[nPtTriggBins][nMultBins] = {0};
+  Double_t erryieldSist[nPtTriggBins][nMultBins] = {0};
 
   // const char *labels[11] = {"90-100%","80-90%","70-80%","60-70%","50-60%","40-50%","30-40%","20-30%","10-20%","0-10%","MB"};
   const char *labels[nMultBins] = {"70#minus100%", "50#minus70%", "40#minus50%", "30#minus40%", "20#minus30%", "10#minus20%", "1#minus10%", "0#minus1%", "0#minus100%"};
@@ -193,28 +195,28 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       pave[iMult][iPtTrigg][iReg]->Draw("same");
 
       // yield=fProj[iMult][iPtTrigg][iReg]->Integral(0,8,"width");
-      yield = 0.;
-      erryield = 0.;
-      Double_t erryieldSist = 0.;
+      yield[iPtTrigg][iMult] = 0.;
+      erryield[iPtTrigg][iMult] = 0.;
+      erryieldSist[iPtTrigg][iMult] = 0.;
       for (Int_t i = 1; i <= fProj[iMult][iPtTrigg][iReg]->GetNbinsX(); i++)
       {
-        yield += fProj[iMult][iPtTrigg][iReg]->GetBinContent(i) * fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i);
-        erryield += pow(fProj[iMult][iPtTrigg][iReg]->GetBinError(i), 2) * pow(fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i), 2);
+        yield[iPtTrigg][iMult] += fProj[iMult][iPtTrigg][iReg]->GetBinContent(i) * fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i);
+        erryield[iPtTrigg][iMult] += pow(fProj[iMult][iPtTrigg][iReg]->GetBinError(i), 2) * pow(fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i), 2);
         // assuming errors are fully correlated in pt
-        erryieldSist += fProjSyst[iMult][iPtTrigg][iReg]->GetBinError(i) * fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i);
+        erryieldSist[iPtTrigg][iMult] += fProjSyst[iMult][iPtTrigg][iReg]->GetBinError(i) * fProj[iMult][iPtTrigg][iReg]->GetBinWidth(i);
       }
-      erryield = sqrt(erryield);
+      erryield[iPtTrigg][iMult] = sqrt(erryield[iPtTrigg][iMult]);
       // cout << "Rel stat error of second pt interval: " << fProj[iMult][iPtTrigg][iReg]->GetBinError(2) / fProj[iMult][iPtTrigg][iReg]->GetBinContent(2) << endl;
-      cout << "Rel stat error of yield: " << erryield / yield << endl;
-      cout << "Rel sist error of yield: " << erryieldSist / yield << endl;
-      cout << iMult << "___" << iPtTrigg << "_____" << yield << endl;
+      cout << "Rel stat error of yield: " << erryield[iPtTrigg][iMult] / yield[iPtTrigg][iMult] << endl;
+      cout << "Rel sist error of yield: " << erryieldSist[iPtTrigg][iMult] / yield[iPtTrigg][iMult] << endl;
+      cout << iMult << "___" << iPtTrigg << "_____" << yield[iPtTrigg][iMult] << endl;
       // yield+=fermiDir->Integral(0,0.5);
       // yield+=fermiDir->Integral(6,100);
 
-      histYield[iPtTrigg][iReg]->SetBinContent(nMultBins - iMult, yield);
-      histYield[iPtTrigg][iReg]->SetBinError(nMultBins - iMult, erryield);
-      histYieldSist[iPtTrigg][iReg]->SetBinContent(nMultBins - iMult, yield);
-      histYieldSist[iPtTrigg][iReg]->SetBinError(nMultBins - iMult, erryieldSist);
+      histYield[iPtTrigg][iReg]->SetBinContent(nMultBins - iMult, yield[iPtTrigg][iMult]);
+      histYield[iPtTrigg][iReg]->SetBinError(nMultBins - iMult, erryield[iPtTrigg][iMult]);
+      histYieldSist[iPtTrigg][iReg]->SetBinContent(nMultBins - iMult, yield[iPtTrigg][iMult]);
+      histYieldSist[iPtTrigg][iReg]->SetBinError(nMultBins - iMult, erryieldSist[iPtTrigg][iMult]);
       histYield[iPtTrigg][iReg]->GetXaxis()->SetBinLabel(iMult + 1, labels[iMult]);
 
       can[iMult][iPtTrigg][iReg]->SaveAs(Form("../../FitPt%s/Ptspectrum_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), multiplicityNames[iMult].Data(), iPtTrigg));
@@ -233,19 +235,22 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   }
 
   // PLOT: uncertainties in 0-1%
-  TLegend * legendUnc = Plotter::CreateLegend(0.15, 0.3, 0.65, 0.85, 0.04);
+  TLegend *legendUnc = Plotter::CreateLegend(0.15, 0.3, 0.65, 0.85, 0.04);
+  TCanvas *canSyst = new TCanvas(Form("canSyst_%s", namesRegions[iReg].Data()), Form("canSyst_%s", namesRegions[iReg].Data()), 1200, 1000);
+  canSyst->Divide(2, 2);
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     for (Int_t iMult = 0; iMult < nMultBins; iMult++)
     {
       if (iMult != 1)
         continue;
-      TCanvas *canSyst = new TCanvas(Form("canSyst%i%i", iMult, iPtTrigg), Form("canSyst%i%i", iMult, iPtTrigg), 1200, 800);
       fProjRelSyst[iMult][iPtTrigg][iReg]->SetLineColor(kBlue);
       fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->SetLineColor(kRed);
       fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetLineColor(kGreen + 2);
       fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetLineColor(kBlack);
+      fProjRelSyst_Final[iMult][iPtTrigg][iReg]->SetTitle(Form("%.0f < p_{T}^{trigg} < %.0f GeV/c", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1]));
       fProjRelSyst_Final[iMult][iPtTrigg][iReg]->GetYaxis()->SetRangeUser(0, 0.5);
+      canSyst->cd(iPtTrigg + 1);
       fProjRelSyst_Final[iMult][iPtTrigg][iReg]->Draw();
       fProjRelSyst_apass4vsapass6[iMult][iPtTrigg][iReg]->Draw("same");
       fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Draw("same hist");
@@ -258,10 +263,10 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
         legendUnc->AddEntry(fProjRelSyst[iMult][iPtTrigg][iReg], "Other", "l");
       }
       legendUnc->Draw();
-      canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.pdf", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
-      canSyst->SaveAs(Form("../../Syst_%s_%s_ptTrigg%d.png", particleName[iPart].Data(), namesRegions[iReg].Data(), iPtTrigg));
     }
   }
+  canSyst->SaveAs(Form("../../Syst_%s_%s.pdf", particleName[iPart].Data(), namesRegions[iReg].Data()));
+  canSyst->SaveAs(Form("../../Syst_%s_%s.png", particleName[iPart].Data(), namesRegions[iReg].Data()));
 
   TLegend *legPtTrigg = Plotter::CreateLegend(0.2, 0.3, 0.7, 0.9, 0.04);
   TCanvas *canYield = Plotter::CreateCanvas(Form("canY"));
@@ -490,7 +495,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       fProjSistScaled[iMult][iPtTrigg][iReg] = (TH1F *)fProjSyst[iMult][iPtTrigg][iReg]->Clone(Form("fHistSpectrumSistScaled_%s_pttrigg%i", multiplicityNames[iMult].Data(), iPtTrigg));
       fProjScaled[iMult][iPtTrigg][iReg]->Scale(ScaleFactorFinal[iMult]);
       fProjSistScaled[iMult][iPtTrigg][iReg]->Scale(ScaleFactorFinal[iMult]);
-      Float_t ProbDensityScaleFactor = histYield[iPtTrigg][iReg]->GetBinContent(nMultBins); // 0-100% integrated yields
+      Float_t ProbDensityScaleFactor = yield[iPtTrigg][iMult];
       fProjScaled[iMult][iPtTrigg][iReg]->Scale(1. / ProbDensityScaleFactor);
       fProjSistScaled[iMult][iPtTrigg][iReg]->Scale(1. / ProbDensityScaleFactor);
       for (Int_t b = 1; b <= fProj[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
