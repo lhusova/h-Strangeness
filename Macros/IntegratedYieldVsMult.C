@@ -125,17 +125,25 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
       }
 
       // adding rel uncertainty associated with closure test
-      TFile *fileClosure = new TFile("ClosureUncertainty.root");
+      TFile *fileClosure = new TFile("../../ClosureUncertainty.root");
       if (!fileClosure)
       {
         cout << "File closure test uncertainties not found" << endl;
         return;
       }
-      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg] = (TH1F *)fileClosure->Get(Form("fhistRelSyst_MCClosure_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[6].Data(), iPtTrigg));
+      fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg] = (TH1F *)fileClosure->Get(Form("fhistRelSyst_MCClosure_%s_%s_%d", namesRegionsShort[iReg].Data(), multiplicityNames[5].Data(), iPtTrigg));
       if (!fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg])
       {
         cout << "Histogram closure test uncertainty not found" << endl;
         return;
+      }
+      //fix a 8% of uncertainty!
+      for (Int_t b = 1; b <= fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetNbinsX(); b++)
+      {
+        if (iMult != 0)
+          fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetBinContent(b, 0.08);
+        else
+          fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->SetBinContent(b, 0);
       }
 
       // put all uncertainties together
@@ -430,8 +438,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     {
       if (iReg == 2)
       {
-        LimInfSpectra = 0.4 * 1e-7;
-        LimSupSpectra = 99999.99;
+        LimInfSpectra = 0.5 * 1e-7;
+        LimSupSpectra = 70000;
+        //LimSupSpectra = 99999999;
       }
       else
         LimInfSpectra = 0.2 * 1e-5; // 0.4 * 1e-6 if not prob. density
@@ -440,8 +449,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     {
       if (iReg == 2)
       {
-        LimInfSpectra = 0.4 * 1e-6;
-        LimSupSpectra = 999999;
+        LimInfSpectra = 0.2 * 1e-5;
+        LimSupSpectra = 200000;
+        //LimSupSpectra = 999999999;
       }
       else
         LimInfSpectra = 0.4 * 1e-4; // 0.4 * 1e-5 if not prob. density
@@ -450,8 +460,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     {
       if (iReg == 2)
       {
-        LimInfSpectra = 0.4 * 1e-6;
-        LimSupSpectra = 999999;
+        LimInfSpectra = 0.2 * 1e-5;
+        LimSupSpectra = 200000;
+        //LimSupSpectra = 999999999;
       }
       else
         LimInfSpectra = 0.4 * 1e-4; // 0.4 * 1e-5 if not prob. density
@@ -460,8 +471,9 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     {
       if (iReg == 2)
       {
-        LimInfSpectra = 0.4 * 1e-5;
-        LimSupSpectra = 999999;
+        LimInfSpectra = 0.2 * 1e-4;
+        LimSupSpectra = 400000;
+        //LimSupSpectra = 999999999;
       }
       else
         LimInfSpectra = 0.4 * 1e-3; // 0.4 * 1e-4 if not prob. density
@@ -589,5 +601,6 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   outputFile->Close();
   cout << "\nI have created the output file: " << stringoutroot << endl;
 
-  cout << "\n\n\e[35mWARNING: Uncertainty on closure test taken from mult 40-50\% for all multiplicity classes! Hardcoded in macro\n\n " << endl;
+  //cout << "\n\n\e[35mWARNING: Uncertainty on closure test taken from mult 40-50\% for all multiplicity classes! Hardcoded in macro\n\n " << endl;
+  cout << "\n\n\e[35mWARNING: Uncertainty on closure test fixed to 8\% for all multiplicity classes! (not applied to MB) Hardcoded in macro\n\n " << endl;
 }
