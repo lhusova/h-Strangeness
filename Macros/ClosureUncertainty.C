@@ -53,7 +53,7 @@ void ClosureUncertainty()
 
       for (Int_t iMult = 0; iMult < nMultBins; iMult++)
       {
-        if (iMult != 2 && iMult != 6)
+        if (iMult != 2 && iMult != 5)
           continue; // keep only 1-10%, 40-50% and 0-100%
         fileClosure = new TFile(Form("../../ClosureUncer_Trigg%d_%s.root", iPtTrigg, multiplicityNamesShort[iMult].Data()));
         if (!fileClosure)
@@ -132,7 +132,7 @@ void ClosureUncertainty()
     {
       for (Int_t iMult = 0; iMult < nMultBins; iMult++)
       {
-        if (iMult != 2 && iMult != 6)
+        if (iMult != 2 && iMult != 5)
           continue; // keep only 1-10%, 40-50% and 0-100%
         canUnc->cd(iReg + 1);
         fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->GetYaxis()->SetTitle("Rel. uncertainty");
@@ -154,14 +154,14 @@ void ClosureUncertainty()
     }
   }
 
-  TFile *fileOut = new TFile("ClosureUncertainty.root", "recreate");
+  TFile *fileOut = new TFile("../../ClosureUncertainty.root", "recreate");
   for (Int_t iPtTrigg = 0; iPtTrigg < nPtTriggBins; iPtTrigg++)
   {
     for (Int_t iReg = 0; iReg < nRegions; iReg++)
     {
       for (Int_t iMult = 0; iMult < nMultBins; iMult++)
       {
-        if (iMult != 2 && iMult != 6)
+        if (iMult != 2 && iMult != 5)
           continue; // keep only 1-10%, 40-50%
         fProjRelSyst_MCClosure[iMult][iPtTrigg][iReg]->Write();
       }
