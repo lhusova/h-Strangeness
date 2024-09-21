@@ -271,7 +271,7 @@ void PlotRegionComparison(Int_t iPart = 0)
       histYieldToMB[iPtTrigg][iReg]->Draw("same ex0");
       histYieldToMB[iPtTrigg][iReg]->SetFillStyle(0);
       histYieldSistToMB[iPtTrigg][iReg]->Draw("same e2");
-      legendYield->AddEntry(histYieldToMB[iPtTrigg][iReg], Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()), "pef");
+      legendYield->AddEntry(histYieldToMB[iPtTrigg][iReg], Form("%s: |#Delta#it{#eta}| < 1.1, %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()), "pef");
     }
     TLegend *LegendTitle = new TLegend(0.06, 0.72, 0.47, 0.93);
     LegendTitle->SetFillStyle(0);
@@ -285,5 +285,6 @@ void PlotRegionComparison(Int_t iPart = 0)
     legendYield->Draw();
     canYield->SaveAs(Form("../../YieldsVsMultPrel_%s_%i.pdf", particleName[iPart].Data(), iPtTrigg));
     canYield->SaveAs(Form("../../YieldsVsMultPrel_%s_%i.png", particleName[iPart].Data(), iPtTrigg));
+    canYield->SaveAs(Form("../../YieldsVsMultPrel_%s_%i.eps", particleName[iPart].Data(), iPtTrigg));
   }
 }
