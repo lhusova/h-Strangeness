@@ -307,7 +307,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
   paveYields->AddText("ALICE, Preliminary");
   paveYields->AddText("pp, 13.6 TeV");
   paveYields->AddText(Form("h#minus%s correlation, |#it{#eta}_{trigg}| < 0.8, |#it{#eta}_{%s}| < 0.8", finalNames[iPart].Data(), finalNames[iPart].Data()));
-  paveYields->AddText(Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()));
+  paveYields->AddText(Form("%s: |#Delta#it{#eta}| < 1.1, %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()));
   paveYields->Draw("same");
   legPtTrigg->Draw();
   canYield->SaveAs(Form("../../YieldsVsMult_%s_%s.pdf", particleName[iPart].Data(), paveRegions[iReg].Data()));
@@ -421,6 +421,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     LegendTitle->SetFillStyle(0);
     LegendTitle->SetTextAlign(33);
     LegendTitle->SetTextSize(0.04);
+    if (iReg == 2) LegendTitle->SetTextSize(0.037);
     LegendTitle->AddEntry("", "#bf{ALICE Preliminary}", "");
     // option 1
     // LegendTitle->AddEntry("", "Run 3, pp #sqrt{#it{s}} = 13.6 TeV", "");
@@ -430,7 +431,7 @@ void IntegratedYieldVsMult(Int_t iPart = 0, Int_t iReg = 0)
     // option 2
     LegendTitle->AddEntry("", Form("pp #sqrt{#it{s}} = 13.6 TeV, h#minus%s correlation", finalNames[iPart].Data()), "");
     LegendTitle->AddEntry("", Form("%.0f < #it{p}_{T}^{trigg} < %.0f GeV/#it{c}, |#it{#eta}^{trigg}| < 0.8, |#it{#eta}^{%s}| < 0.8", ptTriggBins[iPtTrigg], ptTriggBins[iPtTrigg + 1], finalNames[iPart].Data()), "");
-    LegendTitle->AddEntry("", Form("%s: |#Delta#it{#eta}| < 1.1 %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()), "");
+    LegendTitle->AddEntry("", Form("%s: |#Delta#it{#eta}| < 1.1, %s", paveRegions[iReg].Data(), PhiRegions[iReg].Data()), "");
 
     // LimSupSpectra = 9999;
     LimSupSpectra = 30000;
