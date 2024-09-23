@@ -95,7 +95,6 @@ Color_t colRegions[3][5] = {{kRed - 7, kRed - 4, kRed + 1, kRed + 2, kRed + 4}, 
 Int_t markers[4] = {20, 21, 29, 33};
 Float_t markerSize[4] = {1.1, 1.1, 1.4, 1.4};
 Double_t ptTriggBins[] = {2., 4., 6., 10., 50};
-Float_t XaxisLimit[nPtTriggBins] = {15.5, 15.5, 15.5, 15.5};
 
 Int_t Color[] = {634, 628, 797, 815, 418, 429, 867, 601, 1};
 Int_t ColorPt[] = {634, 628, 807, kOrange - 4, 797, 815, 418, 429, 867, 856, 601, kViolet, kPink + 9, kPink + 1, 1};
