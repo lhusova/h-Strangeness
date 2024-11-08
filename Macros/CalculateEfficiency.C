@@ -5,26 +5,39 @@ void CalculateEfficiency(Int_t part = 0){
   TString name[]={"Trigger","K0Short","Lambda","AntiLambda","XiMinus","XiPlus","OmegaMinus","OmegaPlus","Pion"};
   TString finalNames[]={"h","K_{S}^{0}","#Lambda","#bar{#Lambda}","#Xi^{-}","#Xi^{+}","#Omega^{-}","#Omega^{+})","#pi^{+}+#pi^{-}"};
 
-  TFile * fFile = new TFile(Form("../data/AnalysisResults_ForMCclosure_14_08.root"));
+  TFile * fFile = new TFile(Form("../data/AnalysisResults_MB_LHC24f3b.root"));
 
-  TH2F * genHist  = (TH2F *) fFile->Get(Form("correlate-strangeness_id15160/GeneratedWithPV/h%s",name[part].Data()));
+  TH2F * genHist  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s",name[part].Data()));//
   genHist->Sumw2();
-  // TH2F * genHist_wPV_yCut  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s_MidYVsMult",name[part].Data()));
-  // genHist_wPV_yCut->Sumw2();
-  // TH2F * genHist_wPV  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s",name[part].Data()));
-  // genHist_wPV->Sumw2();
+  // // TH2F * genHist_wPV_yCut  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s_MidYVsMult",name[part].Data()));
+  // // genHist_wPV_yCut->Sumw2();
+  // // TH2F * genHist_wPV  = (TH2F *) fFile->Get(Form("correlate-strangeness/GeneratedWithPV/h%s",name[part].Data()));
+  // // genHist_wPV->Sumw2();
   if(part==0)name[0]="Track";
-  TH3F * recoHist  = (TH3F *) fFile->Get(Form("correlate-strangeness_id15160/h%sEtaVsPtVsPhi",name[part].Data()));
+  TH3F * recoHist  = (TH3F *) fFile->Get(Form("correlate-strangeness/h%sEtaVsPtVsPhi",name[part].Data()));//_requireTrigger_3
   recoHist->Sumw2();
+  if(part==0){
+    recoHist->GetXaxis()->SetRange(21,55);
+    // genHist->GetXaxis()->SetRange(21,55);
+  }
   if(part==0)name[0]="Trigger";
   TH3F * recoHist_Bckg;
   if(part>0)  {
-    recoHist_Bckg= (TH3F *) fFile->Get(Form("correlate-strangeness_id15160/h%sEtaVsPtVsPhiBg",name[part].Data()));
+    recoHist_Bckg= (TH3F *) fFile->Get(Form("correlate-strangeness/h%sEtaVsPtVsPhiBg",name[part].Data()));//_requireTrigger_3
     recoHist_Bckg->Sumw2();
   }
 
   // TH3F * recoHist_SpectrY  = (TH3F *) fFile->Get(Form("correlate-strangeness/h3d%sSpectrumY",name[part].Data()));
   // recoHist_SpectrY->Sumw2();
+
+
+  Double_t ptAxis[]={2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.4, 4.8, 5.2, 5.6, 6.0, 6.5, 7.0, 7.5, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 17.0, 19.0, 21.0, 23.0, 25.0, 30.0, 35.0, 40.0, 50.0};
+  TH2F * genHistClone = new TH2F("genHistClone","",35,ptAxis,80, -0.8, 0.8);
+  for (size_t i = 0; i < 35; i++) {
+    for (size_t j = 0; j < 80; j++) {
+      genHistClone->SetBinContent(i+1,j+1,genHist->GetBinContent(21+i,j+1));
+    }
+  }
 
   TH2F * recoEtaPtProj = (TH2F*) recoHist->Project3D("yx");
   recoEtaPtProj->SetName(Form("hEfficiency%s",name[part].Data()));
@@ -52,7 +65,7 @@ void CalculateEfficiency(Int_t part = 0){
   // genHist->RebinX(2);
   // genHist_wPV->RebinY(2);
   // recoEtaPtProj_woBckg->RebinY(2);
-  recoEtaPtProj->Divide(genHist);
+  recoEtaPtProj->Divide(genHistClone);
   // recoEtaPtProj_woBckg->Divide(genHist);
   TCanvas * can = Plotter::CreateCanvas("c");
   gPad->SetTheta(45);
@@ -223,12 +236,13 @@ void CalculateEfficiency(Int_t part = 0){
   // eta_eff_Ratio->DrawCopy();
   // pave->Draw("same");
 
-  TFile *fileNew = new TFile(Form("../data/Efficiency/Eff_%s_NewNew.root",name[part].Data()), "RECREATE");
-  // eta_eff->Write();
+  TFile *fileNew = new TFile(Form("../data/Efficiency/Eff_LHC24f3b_%s_MB.root",name[part].Data()), "RECREATE");
+  // TFile *fileNew = new TFile(Form("../data/Efficiency/Eff_LHC24f3b_%s_MB.root",name[part].Data()), "RECREATE");
+  eta_eff->Write();
   // eta_eff_wPv->Write();
   // eta_eff_woBckg->Write();
   // eta_eff_woBckg_wPV->Write();
-  // pt_eff->Write();
+  pt_eff->Write();
   // pt_eff_wPv->Write();
   // pt_eff_woBckg->Write();
   // pt_eff_woBckg_wPV->Write();
