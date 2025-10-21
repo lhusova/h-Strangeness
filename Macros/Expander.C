@@ -8,15 +8,15 @@ std::vector<double> GetAxisEdges(TH1C *hist){
   return returnArray;
 }
 
-THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoName = "correlate-strangeness/sameEvent/Signal/K0Short", Bool_t MCgen =kTRUE){
+THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoName = "h-strange-correlation/sameEvent/Signal/K0Short", Bool_t MCgen =kTRUE){
   // returns THnF with expanded axes
   // step 1: grab the necessary 1D axes from the reference TH1Cs
-  TH1C *hDPhi = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hDeltaPhiAxis");
-  TH1C *hDEta = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hDeltaEtaAxis");
-  TH1C *hPtAssoc = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hPtAssocAxis");
-  TH1C *hVtxZ = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hVertexZAxis");
-  TH1C *hMult = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hMultAxis");
-  TH1C *hPtTrigg = (TH1C*) file->Get("correlate-strangeness_id14337/axes/hPtTriggerAxis");
+  TH1C *hDPhi = (TH1C*) file->Get("h-strange-correlation/axes/hDeltaPhiAxis");
+  TH1C *hDEta = (TH1C*) file->Get("h-strange-correlation/axes/hDeltaEtaAxis");
+  TH1C *hPtAssoc = (TH1C*) file->Get("h-strange-correlation/axes/hPtAssocAxis");
+  TH1C *hVtxZ = (TH1C*) file->Get("h-strange-correlation/axes/hVertexZAxis");
+  TH1C *hMult = (TH1C*) file->Get("h-strange-correlation/axes/hMultAxis");
+  TH1C *hPtTrigg = (TH1C*) file->Get("h-strange-correlation/axes/hPtTriggerAxis");
 
   std::vector<std::vector<double>> expandedAxes;
   std::vector<double> axisDPhi = GetAxisEdges(hDPhi);
@@ -63,7 +63,8 @@ THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoN
   THnF *hReturnHisto = new THnF(newHistoName.Data(), "", 6, nbins, expandedAxes);
   Int_t coordinate[6];
   Int_t coordinateNew[6];
-  double content;
+  double content, contentErr;
+  Long64_t bin,binNew;
 
   for(Int_t i1=0; i1<nbins[0]; i1++){
     for(Int_t i2=0; i2<nbins[1]; i2++){
@@ -76,6 +77,10 @@ THnF* GetTHnF(TFile *file, TString newHistoName = "newHistogram", TString histoN
               coordinateNew[0] = i1+1; coordinateNew[1] = i2+1; coordinateNew[2] = i3+1; coordinateNew[3] = i4+1; coordinateNew[4] = i5+1; coordinateNew[5] = i6+1;
               content = hNd->GetBinContent(coordinate);
               hReturnHisto->SetBinContent(coordinateNew, content);
+              bin=hNd->GetBin(coordinate);
+              binNew=hReturnHisto->GetBin(coordinateNew);
+              contentErr = hNd->GetBinError2(bin);
+              hReturnHisto->SetBinError2(binNew, contentErr);
             }
           }
         }
